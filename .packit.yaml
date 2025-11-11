@@ -31,7 +31,7 @@ jobs:
   # Build RPMs for each pull request
   - job: copr_build
     trigger: pull_request
-    owner: "rhel-lightspeed"
+    owner: "@rhel-lightspeed"
     project: goose
     targets:
       - fedora-41-x86_64
@@ -51,7 +51,7 @@ jobs:
   - job: copr_build
     trigger: commit
     branch: main
-    owner: "rhel-lightspeed"
+    owner: "@rhel-lightspeed"
     project: goose
     targets:
       - fedora-41-x86_64

@@ -1,0 +1,109 @@
+default:
+  tags:
+    - itup-alm-x86
+  image: rust:1.88.0
+
+workflow:
+  rules:
+    - if: $CI_PIPELINE_SOURCE == "web"
+    - if: $CI_COMMIT_BRANCH == "main"
+
+variables:
+  TAG:
+    description: 'Goose release'
+    value: '1.13.1'
+  RUST_VERSION:
+    description: 'Rust version in RHEL'
+    value: '1.88.0'
+
+stages:
+  - vendor
+  - release
+
+vendor-goose-dependencies:
+  stage: vendor
+  variables:
+    KUBERNETES_CPU_REQUEST: "1"        
+    KUBERNETES_CPU_LIMIT: "2"          
+    KUBERNETES_MEMORY_REQUEST: "2Gi"   
+    KUBERNETES_MEMORY_LIMIT: "4Gi"
+  before_script:
+    - |
+      apt update && apt install zstd
+      git config --global --add safe.directory /builds/rolivier/downstream-goose-vendor
+  script:
+    - |
+      GOOSE_FOLDER="goose-${TAG}"
+      GOOSE_TARBALL="${GOOSE_FOLDER}.tar.gz"
+      FULL_URL="https://github.com/block/goose/archive/refs/tags/v${TAG}.tar.gz"
+      curl -L "$FULL_URL" -o ${GOOSE_TARBALL}
+
+      tar xvf ${GOOSE_TARBALL}
+
+      echo "🛠️ Installing vendor-filter"
+      cargo install cargo-vendor-filterer
+
+      mkdir artifacts
+
+      pushd ${GOOSE_FOLDER}
+
+      echo "📦 Adding metadata for vendor-filter"
+      echo "[workspace.metadata.vendor-filter]
+            platforms = [\"*-unknown-linux-gnu\"]
+            tier = \"2\"
+            all-features = true" >> Cargo.toml
+
+      echo "📦 Patching rust-toochain for ${RUST_VERSION}"
+      sed -i "s/channel = \"[^\"]*\"/channel = \"$RUST_VERSION\"/" rust-toolchain.toml
+
+      echo "📦 Adding vendor-config.toml to goose"
+      mkdir -p .cargo
+      cp ../vendor-config.toml .cargo/vendor-config.toml
+
+      cargo --verbose vendor-filterer --prefix=vendor --format=tar.zstd ../artifacts/goose-vendored.tar.zstd
+      popd
+
+      echo "📦 Packaging patched goose"
+      PATCHED_GOOSE_TARBALL="${GOOSE_FOLDER}-patched.tar.gz"
+      tar -cvf artifacts/${PATCHED_GOOSE_TARBALL} ${GOOSE_FOLDER}
+    - |
+      echo "Generating goose spec"
+
+      python3 generate_spec.py --output-dir artifacts --version ${TAG} \
+        --goose-patched-tarball "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/artifacts/goose-${TAG}-patched.tar.gz" \
+        --goose-vendored-tarball "${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/artifacts/goose-vendored.tar.zstd"
+  artifacts:
+    paths:
+      - artifacts/*
+
+release:
+  stage: release
+  image: registry.gitlab.com/gitlab-org/release-cli
+  variables:
+    ADDITIONAL_CA_CERT_BUNDLE: "$CI_SERVER_TLS_CA_FILE"
+    SSL_CERT_FILE: "$CI_SERVER_TLS_CA_FILE"
+  needs:
+    - job: vendor-goose-dependencies
+      artifacts: true
+  rules:
+    - if: '$CI_COMMIT_BRANCH && $CI_COMMIT_REF_PROTECTED != "false"'
+      #This last rule will do a release for any protected branch. Literal branch names can be used if desired.
+  script:
+    - echo "Creating release for Goose ${TAG}"
+  release:
+    tag_name: v${TAG}
+    name: 'Goose ${TAG} Vendored Dependencies'
+    description: 'Vendored dependencies for Goose ${TAG} with Rust ${RUST_VERSION}'
+    ref: $CI_COMMIT_SHA
+    assets:
+      links:
+        - name: 'Vendored Dependencies (tar.zstd)'
+          url: '${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/artifacts/goose-vendored.tar.zstd'
+          link_type: 'package'
+        - name: 'Patched Goose Source (tar.gz)'
+          url: '${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/artifacts/goose-${TAG}-patched.tar.gz'
+          link_type: 'package'
+        - name: 'Final Goose spec'
+          url: '${CI_PROJECT_URL}/-/jobs/${CI_JOB_ID}/artifacts/file/artifacts/goose.spec'
+          link_type: 'package'
+

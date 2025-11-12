@@ -1,7 +1,7 @@
 default:
   tags:
     - itup-alm-x86
-  image: rust:1.88.0
+  image: rust:1.91.1
 
 workflow:
   rules:

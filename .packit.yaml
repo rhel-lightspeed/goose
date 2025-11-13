@@ -21,7 +21,8 @@ actions:
     - bash -c "make spec"
     - bash -c "cat target/goose.spec"
     - bash -c "cp target/goose* packaging/"
-    - bash -c "ls -1 target/goose*.tar.zstd | grep -v 'vendor'"
+    - bash -c "ls -l packaging/"
+    - bash -c "ls -1 packaging/goose*.tar.zstd | grep -v 'vendor'"
   # Do nothing with spec file. Two steps here are for debugging
   fix-spec-file:
     - bash -c "cat packaging/goose.spec"
@@ -46,6 +47,17 @@ jobs:
       - fedora-43-aarch64
       - fedora-43-ppc64le
       - fedora-43-s390x
+      # RHEL ones
+      - rhel-10-x86_64
+      - rhel-10-aarch64
+      - rhel-10-ppc64le
+      - rhel-10-s390x
+
+      - rhel-9-x86_64
+      - rhel-9-aarch64
+      - epel-9-ppc64le # there is no rhel9-ppc64le in copr
+      - rhel-9-s390x
+
 
   # Build RPMs for main branch
   - job: copr_build
@@ -66,3 +78,15 @@ jobs:
       - fedora-43-aarch64
       - fedora-43-ppc64le
       - fedora-43-s390x
+      - fedora-43-s390x
+      - fedora-43-s390x
+      # RHEL ones
+      - rhel-10-x86_64
+      - rhel-10-aarch64
+      - rhel-10-ppc64le
+      - rhel-10-s390x
+
+      - rhel-9-x86_64
+      - rhel-9-aarch64
+      - epel-9-ppc64le # there is no rhel9-ppc64le in copr
+      - rhel-9-s390x

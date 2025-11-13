@@ -16,8 +16,8 @@ RUST_VERSION ?= 1.88.0
 GOOSE_FOLDER := $(NAME)-$(TAG)
 GOOSE_TARBALL := $(GOOSE_FOLDER).tar.gz
 GOOSE_DIR := $(TARGET_DIR)/$(GOOSE_FOLDER)
-PATCHED_TARBALL := $(TARGET_DIR)/$(GOOSE_FOLDER)-patched.tar.gz
-VENDORED_TARBALL := $(TARGET_DIR)/$(GOOSE_FOLDER)-vendored.tar.zstd
+PATCHED_TARBALL := $(TARGET_DIR)/$(GOOSE_FOLDER)-patched.tar.zstd
+VENDORED_TARBALL := $(TARGET_DIR)/$(GOOSE_FOLDER)-vendor.tar.zstd
 FULL_URL := $(UPSTREAM_REPOSITORY)$(TAG).tar.gz
 
 # Get source date epoch from extracted git repo
@@ -79,7 +79,7 @@ $(VENDORED_TARBALL): $(GOOSE_DIR)/.rust-toolchain-patched
 # Create patched tarball with reproducible options
 $(PATCHED_TARBALL): $(VENDORED_TARBALL)
 	@echo "📦 Creating patched goose tarball"
-	tar -czf $@ $(TAR_REPRODUCIBLE_OPTS) \
+	tar --zstd -cvf $@ $(TAR_REPRODUCIBLE_OPTS) \
 		--mtime=@$(SOURCE_DATE_EPOCH) \
 		-C $(TARGET_DIR) $(GOOSE_FOLDER)
 
@@ -88,20 +88,17 @@ spec: $(PATCHED_TARBALL) $(VENDORED_TARBALL)
 	@echo "Generating spec file"
 	@mkdir -p $(TARGET_DIR)
 	@sed -e 's/^Version:.*/# Replaced by make spec\nVersion: $(TAG)/' \
-		-e 's/^Source0:.*/Source0: $(GOOSE_FOLDER)-patched.tar.gz/' \
-		-e 's/^Source1:.*/Source1: $(GOOSE_FOLDER)-vendored.tar.zstd/' \
+		-e 's/^Source0:.*/Source0: $(GOOSE_FOLDER)-patched.tar.zstd/' \
+		-e 's/^Source1:.*/Source1: $(GOOSE_FOLDER)-vendor.tar.zstd/' \
 		packaging/$(NAME).spec > $(TARGET_DIR)/$(NAME).spec
 	@echo "Generated: $(TARGET_DIR)/$(NAME).spec"
+	@rm -rf $(GOOSE_DIR) $(GOOSE_TARBALL)
 
 # Clean generated files
 clean:
 	@echo "Cleaning generated files"
-	rm -rf $(TARGET_DIR)/$(GOOSE_FOLDER)
-	rm -f $(TARGET_DIR)/$(GOOSE_TARBALL)
-	rm -f $(PATCHED_TARBALL)
-	rm -f $(VENDORED_TARBALL)
-	rm -f $(TARGET_DIR)/$(NAME).spec
-	rm -f $(TARGET_DIR)/*.src.rpm
+	rm -rf $(TARGET_DIR)
+	rm -rf packaging/$(GOOSE_DIR)-$(GOOSE_VERSION)*.tar*
 	@echo "Clean complete"
 
 # Debug target to show variables

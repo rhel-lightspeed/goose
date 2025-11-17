@@ -2,10 +2,10 @@
 upstream_project_url: https://github.com/block/goose
 upstream_package_name: goose
 downstream_package_name: goose
-
 upstream_tag_template: v{version}
-
 specfile_path: packaging/goose.spec
+
+issue_repository: https://github.com/rhel-lightspeed/goose
 
 srpm_build_deps:
   - cargo
@@ -29,6 +29,22 @@ actions:
     - bash -c "ls -al packaging/"
 
 jobs:
+
+  - job: pull_from_upstream
+    trigger: release
+    dist_git_branches:
+      - fedora-all
+
+  - job: koji_build
+    trigger: commit
+    dist_git_branches:
+      - fedora-all
+
+  - job: bodhi_update
+    trigger: commit
+    dist_git_branches:
+      - fedora-branched
+
   # Build RPMs for each pull request
   - job: copr_build
     trigger: pull_request

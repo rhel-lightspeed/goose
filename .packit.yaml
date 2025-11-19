@@ -7,26 +7,9 @@ upstream_tag_template: v{version}
 
 specfile_path: packaging/goose.spec
 
-srpm_build_deps:
-  - cargo
-  - git
-  - libzstd-devel
-  - make
-
-actions:
-  # The last step here is required by Packit to return the archive name
-  # https://packit.dev/docs/configuration/actions#create-archive
-  create-archive:
-    - bash -c "cargo install cargo-vendor-filterer"
-    - bash -c "make spec"
-    - bash -c "cat target/goose.spec"
-    - bash -c "cp target/goose* packaging/"
-    - bash -c "ls -l packaging/"
-    - bash -c "ls -1 packaging/goose*.tar.zstd | grep -v 'vendor'"
-  # Do nothing with spec file. Two steps here are for debugging
-  fix-spec-file:
-    - bash -c "cat packaging/goose.spec"
-    - bash -c "ls -al packaging/"
+sources:
+  - path: goose-1.14.0.tar.gz
+    url: https://github.com/block/goose/archive/refs/tags/v1.14.0.tar.gz
 
 jobs:
   # Build RPMs for each pull request
@@ -35,29 +18,7 @@ jobs:
     owner: "@rhel-lightspeed"
     project: goose
     targets:
-      - fedora-41-x86_64
-      - fedora-41-aarch64
-      - fedora-41-ppc64le
-      - fedora-41-s390x
-      - fedora-42-x86_64
-      - fedora-42-aarch64
-      - fedora-42-ppc64le
-      - fedora-42-s390x
-      - fedora-43-x86_64
-      - fedora-43-aarch64
-      - fedora-43-ppc64le
-      - fedora-43-s390x
-      # RHEL ones
-      - rhel-10-x86_64
-      - rhel-10-aarch64
-      - rhel-10-ppc64le
-      - rhel-10-s390x
-
-      - rhel-9-x86_64
-      - rhel-9-aarch64
-      - epel-9-ppc64le # there is no rhel9-ppc64le in copr
-      - rhel-9-s390x
-
+      - fedora-all
 
   # Build RPMs for main branch
   - job: copr_build
@@ -66,27 +27,4 @@ jobs:
     owner: "@rhel-lightspeed"
     project: goose
     targets:
-      - fedora-41-x86_64
-      - fedora-41-aarch64
-      - fedora-41-ppc64le
-      - fedora-41-s390x
-      - fedora-42-x86_64
-      - fedora-42-aarch64
-      - fedora-42-ppc64le
-      - fedora-42-s390x
-      - fedora-43-x86_64
-      - fedora-43-aarch64
-      - fedora-43-ppc64le
-      - fedora-43-s390x
-      - fedora-43-s390x
-      - fedora-43-s390x
-      # RHEL ones
-      - rhel-10-x86_64
-      - rhel-10-aarch64
-      - rhel-10-ppc64le
-      - rhel-10-s390x
-
-      - rhel-9-x86_64
-      - rhel-9-aarch64
-      - epel-9-ppc64le # there is no rhel9-ppc64le in copr
-      - rhel-9-s390x
+      - fedora-all

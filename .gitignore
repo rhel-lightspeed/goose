@@ -1,2 +1,5 @@
 /target
 /packaging/*.tar*
+.cache
+__pycache__
+.cargo

@@ -8,12 +8,11 @@
 %define vendor_url https://github.com/rhel-lightspeed/goose
 
 Name:           goose
-Version:        1.13.1
+Version:        1.14.0
 Release:        %autorelease
-Summary:        an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM 
+Summary:        an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM
 URL:            https://github.com/block/goose
 Source0:        %{vendor_url}/releases/download/v%{version}/%{name}-%{version}-patched.tar.zstd
-Source1:        %{vendor_url}/releases/download/v%{version}/%{name}-%{version}-vendor.tar.zstd
 
 License:  %{shrink:
     (Apache-2.0 OR MIT) AND BSD-3-Clause
@@ -53,11 +52,7 @@ License:  %{shrink:
     Zlib OR Apache-2.0 OR MIT
 }
 
-%if 0%{?rhel}
-BuildRequires: rust-toolset
-%else
 BuildRequires: cargo-rpm-macros >= 25
-%endif
 BuildRequires: systemd
 BuildRequires: openssl-devel
 BuildRequires: cmake
@@ -66,7 +61,7 @@ BuildRequires: clang
 BuildRequires: libxcb-devel
 
 %description
-an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM 
+an open source, extensible AI agent that goes beyond code suggestions - install, execute, edit, and test with any LLM
 
 
 %prep
@@ -75,21 +70,11 @@ an open source, extensible AI agent that goes beyond code suggestions - install,
 # Taken from https://src.fedoraproject.org/rpms/bpfman/blob/f43/f/bpfman.spec#_88
 find -name '*.rs' -type f -perm /111 -exec chmod -v -x '{}' '+'
 
-# Default -v vendor config doesn't support non-crates.io deps (i.e. git)
-cp .cargo/vendor-config.toml .
-%cargo_prep -N
-cat vendor-config.toml >> .cargo/config.toml
-rm vendor-config.toml
+%generate_buildrequires
+%cargo_generate_buildrequires
 
 %build
 %cargo_build
-
-%cargo_vendor_manifest
-
-# https://pagure.io/fedora-rust/rust-packaging/issue/33
-sed -i -e '/https:\/\//d' cargo-vendor.txt
-%cargo_license_summary
-%{cargo_license} > LICENSE.dependencies
 
 %install
 # Install binaries

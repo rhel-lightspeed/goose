@@ -23,9 +23,9 @@ FULL_URL := $(UPSTREAM_REPOSITORY)$(TAG).tar.gz
 # Get source date epoch from extracted git repo
 SOURCE_DATE_EPOCH = $(shell cd $(GOOSE_DIR) && git log -1 --pretty=%ct 2>/dev/null || date +%s)
 
-.PHONY: all package package-srpm spec clean help
+.PHONY: spec clean help
 
-all: package
+all: help
 
 help:
 	@echo "Available targets:"
@@ -60,7 +60,7 @@ $(GOOSE_DIR)/.cargo-patched: $(GOOSE_DIR)/.extracted
 	@touch $@
 
 # Patch rust-toolchain.toml
-$(GOOSE_DIR)/.rust-toolchain-patched: $(GOOSE_DIR)/.cargo-patched
+$(GOOSE_DIR)/.rust-toolchain-patched: $(GOOSE_DIR)/.extracted
 	@echo "🔧 Updating rust-toolchain.toml to version $(RUST_VERSION)"
 	@if [ -f $(GOOSE_DIR)/rust-toolchain.toml ]; then \
 		sed -i 's/channel = "[^"]*"/channel = "$(RUST_VERSION)"/' $(GOOSE_DIR)/rust-toolchain.toml; \
@@ -77,19 +77,29 @@ $(VENDORED_TARBALL): $(GOOSE_DIR)/.rust-toolchain-patched
 	@touch $(GOOSE_DIR)/.cargo/vendor-config.toml
 
 # Create patched tarball with reproducible options
-$(PATCHED_TARBALL): $(VENDORED_TARBALL)
+$(PATCHED_TARBALL): $(GOOSE_DIR)/.rust-toolchain-patched $(GOOSE_DIR)/.extracted
 	@echo "📦 Creating patched goose tarball"
 	tar --zstd -cvf $@ $(TAR_REPRODUCIBLE_OPTS) \
 		--mtime=@$(SOURCE_DATE_EPOCH) \
 		-C $(TARGET_DIR) $(GOOSE_FOLDER)
 
 # Generate spec file
-spec: $(PATCHED_TARBALL) $(VENDORED_TARBALL)
+vendor-spec: $(PATCHED_TARBALL) $(VENDORED_TARBALL) $(VENDORED_TARBALL)
 	@echo "Generating spec file"
 	@mkdir -p $(TARGET_DIR)
 	@sed -e 's/^Version:.*/# Replaced by make spec\nVersion: $(TAG)/' \
 		-e 's/^Source0:.*/Source0: $(GOOSE_FOLDER)-patched.tar.zstd/' \
 		-e 's/^Source1:.*/Source1: $(GOOSE_FOLDER)-vendor.tar.zstd/' \
+		packaging/$(NAME).spec > $(TARGET_DIR)/$(NAME).spec
+	@echo "Generated: $(TARGET_DIR)/$(NAME).spec"
+	@rm -rf $(GOOSE_DIR) $(GOOSE_TARBALL)
+
+# Generate spec file
+spec: $(PATCHED_TARBALL)
+	@echo "Generating spec file"
+	@mkdir -p $(TARGET_DIR)
+	@sed -e 's/^Version:.*/# Replaced by make spec\nVersion: $(TAG)/' \
+		-e 's/^Source0:.*/Source0: $(GOOSE_FOLDER)-patched.tar.zstd/' \
 		packaging/$(NAME).spec > $(TARGET_DIR)/$(NAME).spec
 	@echo "Generated: $(TARGET_DIR)/$(NAME).spec"
 	@rm -rf $(GOOSE_DIR) $(GOOSE_TARBALL)

@@ -3,3 +3,6 @@
 *.src.rpm
 goose-source
 *-vendor.tar.xz
+# This is not needed to be tracked in the source control as spectool can pull
+# this for us.
+include-3rd-party-license-copy.patch

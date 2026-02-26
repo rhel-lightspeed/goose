@@ -18,18 +18,6 @@ Source:         %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 #   chmod +x generate-vendor-tarball.sh
 #   ./generate-vendor-tarball.sh
 Source1:        %{name}-%{version}-vendor.tar.xz
-# License files for JavaScript/CSS minified files present in goose-mcp crate.
-#   * See https://github.com/block/goose/pull/7352.
-#
-# This can be removed once the above is merged, *AND* we are able to update to
-# newer versions of Goose.
-# See https://issues.redhat.com/browse/RSPEED-2434 for more details.
-Source2:        chart-js.license
-Source3:        d3-js.license
-Source4:        d3-sankey.license
-Source5:        leaflet.license
-Source6:        leaflet-markercluster.license
-Source7:        mermaid.license
 
 # Remove windows specific dependencies (winapi/winreg) from goose crates.
 Patch:          0001-Patch-windows-dependencies-across-workspace.patch
@@ -48,6 +36,13 @@ Patch2:         0003-Patch-code-to-use-native-tls-instead-of-rustls.patch
 # The patch was taken from:
 #   * https://src.fedoraproject.org/rpms/rust-ring/blob/d6d681ed07c088671cb5accc0102470b059a5e88/f/rust-ring.spec#_24
 Patch4:         0004-Downstream-only-never-use-pre-generated-object-files.patch
+# License files for JavaScript/CSS minified files present in goose-mcp crate.
+#   * See https://github.com/block/goose/pull/7352.
+#
+# This can be removed once the above is merged, *AND* we are able to update to
+# newer versions of Goose.
+# See https://issues.redhat.com/browse/RSPEED-2434 for more details.
+Patch5:         %{url}/pull/7352.patch#/include-3rd-party-license-copy.patch
 
 
 # The license for the goose project is Apache-2.0, except for:
@@ -256,9 +251,6 @@ install, execute, edit, and test with any LLM.
 %prep
 %autosetup -n %{name}-%{version} -p1 -a1
 
-# Copy JavaScript/CSS license text into %%{name}-%%{version} folder.
-cp -pav %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} %{SOURCE7} .
-
 # Reomve the documentation folder but leave `static/img/logo_{dark,light}.png`
 # in it, as they are used in goose-cli crate. All the other markdown, audio,
 # images and etc are not necessary to be present here.
@@ -375,12 +367,13 @@ skip="${skip-} --skip scenario_tests::scenarios::tests::test_image_analysis"
 
 %license LICENSE
 %license LICENSE.dependencies
-%license chart-js.license
-%license d3-js.license
-%license d3-sankey.license
-%license leaflet.license
-%license leaflet-markercluster.license
-%license mermaid.license
+%license licenses/chart-js.license
+%license licenses/d3-js.license
+%license licenses/d3-sankey.license
+%license licenses/leaflet.license
+%license licenses/leaflet-markercluster.license
+%license licenses/mermaid.license
+
 %license cargo-vendor.txt
 
 %{_bindir}/goose

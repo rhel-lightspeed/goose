@@ -2,7 +2,7 @@
 set -euo pipefail
 
 # List of patches to be applied in the vendored folder
-PATCHES=("0001-Patch-windows-dependencies-across-workspace.patch" "0002-Disable-rustls-and-default-features-for-some-librari.patch")
+PATCHES=("0001-Fix-code-due-to-crate-update-changes.patch" "0002-Patch-Cargo.toml-to-remove-crates-and-some-features.patch")
 
 check_required_tools() {
     local tools=("cargo" "rpmspec" "spectool" "tar" "patch")

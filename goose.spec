@@ -1,13 +1,7 @@
 %bcond check 1
 
 Name:           goose
-# We are currently stuck on this stable version due to some constraints related
-# to newer dependencies to goose and how they handle their releases. We will be
-# able to update to >=1.24 once upstream have a more logical way of handling
-# features like code execution, plugins and etc, which brings dependencies like
-# `v8` and `deno-core`, that are very difficult to handle.
-# See https://issues.redhat.com/browse/RSPEED-2434 for more details.
-Version:        1.23.2
+Version:        1.26.1
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/block/goose
@@ -16,18 +10,6 @@ Source:         %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 #   chmod +x generate-vendor-tarball.sh
 #   ./generate-vendor-tarball.sh
 Source1:        %{name}-%{version}-vendor.tar.xz
-# License files for JavaScript/CSS minified files present in goose-mcp crate.
-#   * See https://github.com/block/goose/pull/7352.
-#
-# This can be removed once the above is merged, *AND* we are able to update to
-# newer versions of Goose.
-# See https://issues.redhat.com/browse/RSPEED-2434 for more details.
-Source2:        chart-js.license
-Source3:        d3-js.license
-Source4:        d3-sankey.license
-Source5:        leaflet.license
-Source6:        leaflet-markercluster.license
-Source7:        mermaid.license
 # This script is used to generate the vendor tarball for goose, and while it
 # does not offer any practical/real usage for the application, it helps us to
 # easily generate the vendored tarball and apply the correct patches while
@@ -35,22 +17,17 @@ Source7:        mermaid.license
 Source99:        generate-vendor-tarball.sh
 
 # Remove windows specific dependencies (winapi/winreg) from goose crates.
-Patch:          0001-Patch-windows-dependencies-across-workspace.patch
+Patch:          0001-Fix-code-due-to-crate-update-changes.patch
 # This patch disable the default features for some dependencies that were
 # bringing unwanted crates, like `rustls` or `ring` and swap to use
 # `native-tls` where is possible for the other dependencies.
-Patch1:         0002-Disable-rustls-and-default-features-for-some-librari.patch
-# Patch the source code of goose to make use of `native-tls` instead of
-# `rustls`. This is not contained in the above patch on purpose, so we can
-# re-create the dependencies patch easily without having to modify source code
-# when a new version is pushed.
-Patch2:         0003-Patch-code-to-use-native-tls-instead-of-rustls.patch
+Patch1:         0002-Patch-Cargo.toml-to-remove-crates-and-some-features.patch
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
 # files that comes with the vendored crate, and instead, build from system
 # libraries.
 # The patch was taken from:
 #   * https://src.fedoraproject.org/rpms/rust-ring/blob/d6d681ed07c088671cb5accc0102470b059a5e88/f/rust-ring.spec#_24
-Patch4:         0004-Downstream-only-never-use-pre-generated-object-files.patch
+Patch3:         Downstream-only-never-use-pre-generated-object-files.diff
 
 
 # The license for the goose project is Apache-2.0, except for:
@@ -159,6 +136,8 @@ BuildRequires:  tomcli
 
 # Required by crate bzip2-sys (vendored)
 BuildRequires:  pkgconfig(bzip2)
+# Required by crate llama.cpp (vendored)
+BuildRequires:  cmake
 # Required by crate libdbus-sys (vendored)
 BuildRequires:  dbus-devel
 # Required by crate libgit2-sys (vendored)
@@ -293,8 +272,8 @@ faster and focus on innovation.
 %prep
 %autosetup -p1 -a1
 
-# Copy JavaScript/CSS license text into %%{name}-%%{version} folder.
-cp -pav %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} %{SOURCE7} .
+# _-------_-------_------ test v8 stuff
+rm -rf vendor/v8
 
 # Reomve the documentation folder but leave `static/img/logo_{dark,light}.png`
 # in it, as they are used in goose-cli crate. All the other markdown, audio,
@@ -419,12 +398,12 @@ skip="${skip-} --skip scenario_tests::scenarios::tests::test_image_analysis"
 
 %license LICENSE
 %license LICENSE.dependencies
-%license chart-js.license
-%license d3-js.license
-%license d3-sankey.license
-%license leaflet.license
-%license leaflet-markercluster.license
-%license mermaid.license
+%license crates/goose-mcp/licenses/chart-js.license
+%license crates/goose-mcp/licenses/d3-js.license
+%license crates/goose-mcp/licenses/d3-sankey.license
+%license crates/goose-mcp/licenses/leaflet.license
+%license crates/goose-mcp/licenses/leaflet-markercluster.license
+%license crates/goose-mcp/licenses/mermaid.license
 %license cargo-vendor.txt
 
 %{_bindir}/goose

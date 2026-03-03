@@ -1,0 +1,86 @@
+From 6d379671e3e8186835ea62e989522111198b210a Mon Sep 17 00:00:00 2001
+From: Rodolfo Olivieri <rodolfo.olivieri3@gmail.com>
+Date: Tue, 10 Feb 2026 12:07:23 -0300
+Subject: [PATCH 1/2] Fix code due to crate update changes
+
+* Remove rustls default provider installation from lapstone tunnel
+* Remove rustls default provider installation from commands agent
+* Patched providers/api_cilent.rs to allow using from_pkcs8_pem due to
+  native-tls
+* Patched session/diagnostics.rs to use correct type (due to zip ^8.0
+  update)
+---
+ crates/goose-server/src/commands/agent.rs  |  6 ------
+ crates/goose-server/src/tunnel/lapstone.rs |  2 --
+ crates/goose/src/providers/api_client.rs   | 10 ++++------
+ crates/goose/src/session/diagnostics.rs    |  3 ++-
+ 4 files changed, 6 insertions(+), 15 deletions(-)
+
+diff --git a/crates/goose-server/src/commands/agent.rs b/crates/goose-server/src/commands/agent.rs
+index e5bc0fb97..edcc5a0bb 100644
+--- a/crates/goose-server/src/commands/agent.rs
++++ b/crates/goose-server/src/commands/agent.rs
+@@ -26,12 +26,6 @@ async fn shutdown_signal() {
+ }
+ 
+ pub async fn run() -> Result<()> {
+-    // Install the rustls crypto provider early, before any spawned tasks (tunnel,
+-    // gateways, etc.) try to open TLS connections. Both `ring` and `aws-lc-rs`
+-    // features are enabled on rustls (via different transitive deps), so rustls
+-    // cannot auto-detect a provider — we must pick one explicitly.
+-    let _ = rustls::crypto::ring::default_provider().install_default();
+-
+     crate::logging::setup_logging(Some("goosed"))?;
+ 
+     let settings = configuration::Settings::new()?;
+diff --git a/crates/goose-server/src/tunnel/lapstone.rs b/crates/goose-server/src/tunnel/lapstone.rs
+index c824a39af..8449abc42 100644
+--- a/crates/goose-server/src/tunnel/lapstone.rs
++++ b/crates/goose-server/src/tunnel/lapstone.rs
+@@ -477,8 +477,6 @@ async fn run_single_connection(
+     server_secret: String,
+     restart_tx: mpsc::Sender<()>,
+ ) {
+-    let _ = rustls::crypto::ring::default_provider().install_default();
+-
+     let worker_url = get_worker_url();
+     let ws_url = worker_url
+         .replace("https://", "wss://")
+diff --git a/crates/goose/src/providers/api_client.rs b/crates/goose/src/providers/api_client.rs
+index 9f4feefe8..e4ebef458 100644
+--- a/crates/goose/src/providers/api_client.rs
++++ b/crates/goose/src/providers/api_client.rs
+@@ -119,12 +119,10 @@ impl TlsConfig {
+             let key_pem = read_to_string(&cert_key_pair.key_path)
+                 .map_err(|e| anyhow::anyhow!("Failed to read client private key: {}", e))?;
+ 
+-            // Create a combined PEM file with certificate and private key
+-            let combined_pem = format!("{}\n{}", cert_pem, key_pem);
+-
+-            let identity = Identity::from_pem(combined_pem.as_bytes()).map_err(|e| {
+-                anyhow::anyhow!("Failed to create identity from cert and key: {}", e)
+-            })?;
++            let identity = Identity::from_pkcs8_pem(cert_pem.as_bytes(), key_pem.as_bytes())
++                .map_err(|e| {
++                    anyhow::anyhow!("Failed to create identity from cert and key: {}", e)
++                })?;
+ 
+             Ok(Some(identity))
+         } else {
+diff --git a/crates/goose/src/session/diagnostics.rs b/crates/goose/src/session/diagnostics.rs
+index 31c29b047..2040a8e0f 100644
+--- a/crates/goose/src/session/diagnostics.rs
++++ b/crates/goose/src/session/diagnostics.rs
+@@ -84,7 +84,8 @@ pub async fn generate_diagnostics(
+     let mut buffer = Vec::new();
+     {
+         let mut zip = ZipWriter::new(Cursor::new(&mut buffer));
+-        let options = FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
++        let options: FileOptions<'_, ()> =
++            FileOptions::default().compression_method(zip::CompressionMethod::Deflated);
+ 
+         let mut log_files: Vec<_> = fs::read_dir(&logs_dir)?
+             .filter_map(|e| e.ok())
+-- 
+2.53.0
+

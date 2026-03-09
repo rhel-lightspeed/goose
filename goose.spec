@@ -131,32 +131,51 @@ Patch4:         0004-Downstream-only-never-use-pre-generated-object-files.patch
 # Unlicense OR MIT
 # Zlib
 # Zlib OR Apache-2.0 OR MIT
+#
+# The set of licenses detected by "licensecheck --shortname-scheme=spdx -r"
+# is used here:
 License:        %{shrink:
-                (0BSD OR Apache-2.0 OR MIT)
+                0BSD
+                AND Apache-1.0
                 AND Apache-2.0
-                AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
-                AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT)
-                AND (Apache-2.0 OR BSD-2-Clause OR MIT)
-                AND (Apache-2.0 OR BSD-3-Clause)
-                AND (Apache-2.0 OR BSD-3-Clause OR MIT)
-                AND (Apache-2.0 OR BSL-1.0)
-                AND (Apache-2.0 OR CC0-1.0 OR MIT-0)
+                AND (Apache-2.0 AND BSD-3-Clause)
+                AND (Apache-2.0 AND BSL-1.0)
+                AND (Apache-2.0 AND LGPL-2.1-or-later AND MIT)
+                AND (Apache-2.0 AND MIT)
+                AND (Apache-2.0 AND NTP AND Unlicense)
                 AND (Apache-2.0 OR GPL-2.0-only)
-                AND (Apache-2.0 OR LGPL-2.1-or-later OR MIT)
                 AND (Apache-2.0 OR MIT)
-                AND (Apache-2.0 OR MIT OR Zlib)
+                AND (Apache-2.0 OR MIT AND BSD-3-Clause)
+                AND (Apache-2.0 OR MIT AND MIT)
+                AND (Apache-2.0 OR MIT AND NCSA)
+                AND APSL-2.0
                 AND BSD-2-Clause
+                AND BSD-2-Clause-Views
                 AND BSD-3-Clause
-                AND (BSD-3-Clause OR MIT)
+                AND (BSD-3-Clause AND CC-BY-3.0 AND MIT)
                 AND BSL-1.0
                 AND CC0-1.0
+                AND (CC0-1.0 AND MIT)
+                AND CC-BY-4.0
+                AND GPL-2.0-only
+                AND (GPL-2.0-only AND MIT)
+                AND (GPL-2.0-only AND SSLeay-standalone)
+                AND (HPND-sell-variant AND NTP)
                 AND ISC
+                AND LGPL-2.1-only
+                AND LGPL-2.1-or-later
+                AND LGPL-3.0-only
                 AND LGPL-3.0-or-later
                 AND MIT
-                AND (MIT OR Unlicense)
                 AND MIT-0
+                AND (MIT AND NTP)
                 AND MPL-2.0
-                AND Unicode-3.0
+                AND OpenSSL
+                AND LicenseRef-Fedora-Public-Domain
+                AND SSLeay-standalone
+                AND Unicode-DFS-2016
+                AND Unlicense
+                AND W3C
                 AND Zlib
                 }
 # LICENSE.dependencies contains a full license breakdown

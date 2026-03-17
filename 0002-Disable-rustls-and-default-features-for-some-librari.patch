@@ -1,7 +1,7 @@
-From dbd2529d89f3df21c3b72db7a5d9f7f52b459309 Mon Sep 17 00:00:00 2001
+From 61e01ef2b41fc8f3dcb440e68fd92c781e31db52 Mon Sep 17 00:00:00 2001
 From: Rodolfo Olivieri <rodolfo.olivieri3@gmail.com>
 Date: Tue, 10 Feb 2026 12:06:30 -0300
-Subject: [PATCH 2/3] Disable rustls and default-features for some libraries
+Subject: [PATCH 2/4] Disable rustls and default-features for some libraries
 
 * Removed rustls features from reqwest, sqlx, tokio-tungstenite
 * Added runtime-tokio-native-tls feature for sqlx as the original one
@@ -30,7 +30,7 @@ Subject: [PATCH 2/3] Disable rustls and default-features for some libraries
  4 files changed, 155 insertions(+), 517 deletions(-)
 
 diff --git a/Cargo.lock b/Cargo.lock
-index c4e6040ac..9eb155b9d 100644
+index 1d99b76fd..938371d52 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
 @@ -169,12 +169,6 @@ dependencies = [

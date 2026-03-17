@@ -47,13 +47,16 @@ Patch1:         0002-Disable-rustls-and-default-features-for-some-librari.patch
 # re-create the dependencies patch easily without having to modify source code
 # when a new version is pushed.
 Patch2:         0003-Patch-code-to-use-native-tls-instead-of-rustls.patch
+# This fix is intended to be EPEL 9 only, but for convenience, we will try to
+# use it on all versions since that should not be a breaking change across any
+# target and the functionality should be the same.
+Patch3:         0004-Fix-sql-statement-from-session-manager.patch
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
 # files that comes with the vendored crate, and instead, build from system
 # libraries.
 # The patch was taken from:
 #   * https://src.fedoraproject.org/rpms/rust-ring/blob/d6d681ed07c088671cb5accc0102470b059a5e88/f/rust-ring.spec#_24
-Patch4:         0004-Downstream-only-never-use-pre-generated-object-files.patch
-
+Patch4:         Downstream-only-never-use-pre-generated-object-files.patch
 
 # The license for the goose project is Apache-2.0, except for:
 #

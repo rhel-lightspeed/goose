@@ -1,6 +1,9 @@
 %bcond check 1
 # Limit parallel processes to prevent OOM during build:
 %global _smp_tasksize_proc 4096
+# Decrease the amount of cpus used for the compilation. It will result in
+# slower builds, but, we aim for consistency instead of velocity.
+%global _smp_ncpus_max 64
 
 Name:           goose
 # We are currently stuck on this stable version due to some constraints related

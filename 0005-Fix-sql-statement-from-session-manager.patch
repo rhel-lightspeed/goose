@@ -1,0 +1,60 @@
+From 0fd34dfefedc0452637f6b7af628193bb1cee868 Mon Sep 17 00:00:00 2001
+From: Rodolfo Olivieri <rodolfo.olivieri3@gmail.com>
+Date: Tue, 17 Mar 2026 14:28:03 -0300
+Subject: [PATCH 5/6] Fix sql statement from session manager
+
+Session manager is using a `RETURNING` statement that is only available
+in sqlite 3.35.0, and in EPEL 9, the version is stuck on 3.34.1. To
+enable the project to build and the tests to pass, we are patching the
+session manager to not call `RETURNING` in the same SQL statement, but
+rather, inserting and retrieving the rowid in a subsequent database
+call.
+---
+ crates/goose/src/session/session_manager.rs | 18 +++++++++++++-----
+ 1 file changed, 13 insertions(+), 5 deletions(-)
+
+diff --git a/crates/goose/src/session/session_manager.rs b/crates/goose/src/session/session_manager.rs
+index ea039da6a..ff13515c1 100644
+--- a/crates/goose/src/session/session_manager.rs
++++ b/crates/goose/src/session/session_manager.rs
+@@ -902,7 +902,8 @@ impl SessionStorage {
+         let mut tx = pool.begin().await?;
+ 
+         let today = chrono::Utc::now().format("%Y%m%d").to_string();
+-        let session = sqlx::query_as(
++
++        sqlx::query(
+             r#"
+                 INSERT INTO sessions (id, name, user_set_name, session_type, working_dir, extension_data)
+                 VALUES (
+@@ -917,16 +918,23 @@ impl SessionStorage {
+                     ?,
+                     '{}'
+                 )
+-                RETURNING *
+-                "#,
++            "#,
+         )
+             .bind(&today)
+             .bind(&today)
+             .bind(&name)
+             .bind(session_type.to_string())
+             .bind(working_dir.to_string_lossy().as_ref())
+-            .fetch_one(&mut *tx)
+-            .await?;
++            .execute(&mut *tx)
++        .await?;
++
++        let session: Session = sqlx::query_as(
++            r#"
++                SELECT * FROM sessions WHERE rowid = last_insert_rowid()
++            "#,
++        )
++        .fetch_one(&mut *tx)
++        .await?;
+ 
+         tx.commit().await?;
+         crate::posthog::emit_session_started();
+-- 
+2.53.0
+

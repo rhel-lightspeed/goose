@@ -1,0 +1,6 @@
+# goose tests
+plan:
+    import:
+        url: https://gitlab.com/redhat/centos-stream/tests/goose
+        ref: main
+        name: /plans

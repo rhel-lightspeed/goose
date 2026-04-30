@@ -1,9 +1,6 @@
 %bcond check 1
 # Limit parallel processes to prevent OOM during build:
 %global _smp_tasksize_proc 4096
-# Decrease the amount of cpus used for the compilation. It will result in
-# slower builds, but, we aim for consistency instead of velocity.
-%global _smp_ncpus_max 64
 
 Name:           goose
 # We are currently stuck on this stable version due to some constraints related
@@ -16,6 +13,7 @@ Version:        1.23.2
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/block/goose
+
 Source:         %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 # To create the vendor tarball, use the generate-vendor-tarball.sh script:
 #   chmod +x generate-vendor-tarball.sh
@@ -33,12 +31,12 @@ Source4:        d3-sankey.license
 Source5:        leaflet.license
 Source6:        leaflet-markercluster.license
 Source7:        mermaid.license
-Source8:        goose-init.sh
+
 # This script is used to generate the vendor tarball for goose, and while it
 # does not offer any practical/real usage for the application, it helps us to
 # easily generate the vendored tarball and apply the correct patches while
 # doing so.
-Source99:        generate-vendor-tarball.sh
+Source99:       generate-vendor-tarball.sh
 
 # Remove windows specific dependencies (winapi/winreg) from goose crates.
 Patch:          0001-Patch-windows-dependencies-across-workspace.patch
@@ -54,12 +52,35 @@ Patch2:         0003-Patch-code-to-use-native-tls-instead-of-rustls.patch
 # Downstream patch to update tar for version 0.4.45. This patch can be dropped
 # once https://issues.redhat.com/browse/RSPEED-2434 is fixed.
 Patch3:         0004-Fix-for-CVE-2026-33056-on-tar.patch
+# This fix is intended to be EPEL 9 only, but for convenience, we will try to
+# use it on all versions since that should not be a breaking change across any
+# target and the functionality should be the same.
+Patch4:         0005-Fix-sql-statement-from-session-manager.patch
+# Add disclaimer as required by legal only on RHEL
+%if 0%{?rhel}
+Patch5:         0006-Include-legal-message-for-goose-proxy-provider.patch
+%endif
+# Backport of https://github.com/aaif-goose/goose/pull/8118
+# Sets permissions of newly created secrets.yaml file to 0600.
+Patch6:         0007-Better-default-permissions-for-secrets.patch
+
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
 # files that comes with the vendored crate, and instead, build from system
 # libraries.
 # The patch was taken from:
 #   * https://src.fedoraproject.org/rpms/rust-ring/blob/d6d681ed07c088671cb5accc0102470b059a5e88/f/rust-ring.spec#_24
-Patch4:         0004-Downstream-only-never-use-pre-generated-object-files.patch
+Patch1001:      1001-Downstream-only-never-use-pre-generated-object-files.patch
+# Raise recursion limit to fix test failures. This is fixed upstream so is only needed
+# to prevent test failures when packaging.
+Patch1002:      1002-Raise-recursion-limit.patch
+
+# i686: https://fedoraproject.org/wiki/Changes/EncourageI686LeafRemoval
+ExcludeArch:    %{ix86}
+
+# This package provides a binary called goose and it will conflict with our
+# package, as both installs the resulting binary to `/usr/bin/goose`, so it's
+# better that we indicate it has a conflict.
+Conflicts: golang-github-pressly-goose
 
 
 # The license for the goose project is Apache-2.0, except for:
@@ -169,7 +190,6 @@ License:        %{shrink:
 # LICENSE.dependencies contains a full license breakdown
 
 BuildRequires:  cargo-rpm-macros >= 25
-BuildRequires:  tomcli
 
 # Required by crate bzip2-sys (vendored)
 BuildRequires:  pkgconfig(bzip2)
@@ -178,7 +198,7 @@ BuildRequires:  dbus-devel
 # Required by crate libgit2-sys (vendored)
 BuildRequires:  libgit2-devel
 # Required by crate libsqlite3-sys (vendored)
-BuildRequires:  clang
+BuildRequires:  clang-devel
 BuildRequires:  pkgconfig(sqlite3)
 # Required by crate onig_sys (vendored)
 BuildRequires:  oniguruma-devel
@@ -288,7 +308,7 @@ Provides:       bundled(leaflet-markercluster-min-js) = 1.5.3
 # any version here.
 Provides:       bundled(mermaid-min-js)
 
-%description
+%global _description %{expand:
 Goose is your on-machine AI agent, capable of automating complex development
 tasks from start to finish. More than just code suggestions, goose can build
 entire projects from scratch, write and execute code, debug failures,
@@ -302,7 +322,9 @@ Designed for maximum flexibility, goose works with any LLM and supports
 multi-model configuration to optimize performance and cost, seamlessly
 integrates with MCP servers, and is available as both a desktop app as well as
 CLI - making it the ultimate AI assistant for developers who want to move
-faster and focus on innovation.
+faster and focus on innovation.}
+
+%description    %{_description}
 
 %prep
 %autosetup -p1 -a1
@@ -370,7 +392,7 @@ prune_vendor "ring-*" "pregenerated"
 # And will add the `pkg-config` to the default-features, and patch
 # .cargo-checksum.json to ignore the changed files.
 find . -maxdepth 1 -path "*/zstd-*" \
-    -exec tomcli set "{}/Cargo.toml" append features.default pkg-config \; \
+    -exec sed -i '/^default = \[/s/\[/&"pkg-config", /' "{}/Cargo.toml" \; \
     -exec sed -i.uncheck -e 's/"files":{[^}]*}/"files":{ }/' "{}/.cargo-checksum.json" \;
 
 prune_vendor "zstd-sys-*" "zstd"
@@ -383,9 +405,10 @@ prune_vendor "zstd-sys-*" "zstd"
 # Cargo.toml (via our existing patch) and not have to modify the vendored
 # Cargo.toml directly.
 find . -maxdepth 1 -path "*/posthog-rs-*" \
-    -exec tomcli set "{}/Cargo.toml" str dependencies.reqwest.version "0.12.28" \; \
-    -exec tomcli set "{}/Cargo.toml" arrays delitem dependencies.reqwest.features "rustls-tls" \; \
-    -exec tomcli set "{}/Cargo.toml" append dependencies.reqwest.features "native-tls" \; \
+    -exec sed -i \
+        -e '/reqwest.*=.*{/{s/version = "[^"]*"/version = "0.12.28"/;s/"rustls-tls"/"native-tls"/;}' \
+        -e '/^\[dependencies\.reqwest\]/,/^\[/{/^version\s*=/{s/"[^"]*"/"0.12.28"/;};s/"rustls-tls"/"native-tls"/;}' \
+        "{}/Cargo.toml" \; \
     -exec sed -i.uncheck -e 's/"files":{[^}]*}/"files":{ }/' "{}/.cargo-checksum.json" \;
 popd
 
@@ -410,9 +433,7 @@ export RUSTONIG_SYSTEM_LIBONIG=1
 %install
 install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}
 install -Dpm 0755 target/rpm/goosed -t %{buildroot}%{_bindir}
-%if %{?rhel:%{rhel}}%{!?rhel:0} >= 9 || %{?epel:%{epel}}%{!?epel:0} >= 9
-install -Dpm 0755 %{SOURCE8} %{buildroot}%{_sysconfdir}/profile.d/goose-init.sh
-%endif
+install -Dpm 0755 target/rpm/goose-acp-server -t %{buildroot}%{_bindir}
 
 %if %{with check}
 %check
@@ -451,10 +472,7 @@ skip="${skip-} --skip scenario_tests::scenarios::tests::test_image_analysis"
 
 %{_bindir}/goose
 %{_bindir}/goosed
-%if %{?rhel:%{rhel}}%{!?rhel:0} >= 9 || %{?epel:%{epel}}%{!?epel:0} >= 9
-# Creates default Red Hat recommended config if needed
-%{_sysconfdir}/profile.d/goose-init.sh
-%endif
+%{_bindir}/goose-acp-server
 
 %changelog
 %autochangelog

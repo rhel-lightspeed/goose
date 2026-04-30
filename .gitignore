@@ -1,5 +1,12 @@
-*.crate
-*.tar.gz
-*.src.rpm
-goose-source
+# Distribution / packaging
 *-vendor.tar.xz
+*.crate
+*.src.rpm
+*.tar.gz
+goose-*
+
+# Dev
+.python-version
+.env
+.venv
+.venvs

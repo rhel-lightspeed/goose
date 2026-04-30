@@ -1,0 +1,10 @@
+diff --git a/crates/goose-acp/tests/server_test.rs b/crates/goose-acp/tests/server_test.rs
+index c9241b2a9..b7a765fab 100644
+--- a/crates/goose-acp/tests/server_test.rs
++++ b/crates/goose-acp/tests/server_test.rs
+@@ -1,3 +1,5 @@
++#![recursion_limit = "256"]
++
+ mod common_tests;
+ use common_tests::fixtures::run_test;
+ use common_tests::fixtures::server::ClientToAgentSession;

@@ -1,0 +1,114 @@
+From 1638c9b9d196d616169e1301fccf529120a17afd Mon Sep 17 00:00:00 2001
+From: Rodolfo Olivieri <rolivier@redhat.com>
+Date: Fri, 24 Apr 2026 10:17:55 -0300
+Subject: [PATCH 6/6] Include legal message for goose proxy provider
+
+Display legal disclaimers when the configured provider is the Red Hat
+proxy (rhel_cla). A startup disclaimer warns about AI usage and data
+handling, and a post-response reminder asks users to review
+AI-generated content.
+
+The disclaimer logic lives in a dedicated legal module so both
+interactive sessions and headless term runs can use it.
+---
+ crates/goose-cli/src/commands/term.rs |  3 +++
+ crates/goose-cli/src/legal.rs         | 32 +++++++++++++++++++++++++++
+ crates/goose-cli/src/lib.rs           |  1 +
+ crates/goose-cli/src/session/mod.rs   |  2 ++
+ 4 files changed, 38 insertions(+)
+ create mode 100644 crates/goose-cli/src/legal.rs
+
+diff --git a/crates/goose-cli/src/commands/term.rs b/crates/goose-cli/src/commands/term.rs
+index 22fade45a..184153565 100644
+--- a/crates/goose-cli/src/commands/term.rs
++++ b/crates/goose-cli/src/commands/term.rs
+@@ -5,6 +5,7 @@ use goose::session::{SessionManager, SessionType};
+ use rmcp::model::Role;
+ 
+ use crate::session::{build_session, SessionBuilderConfig};
++use crate::legal;
+ 
+ use clap::ValueEnum;
+ 
+@@ -258,7 +259,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
+     };
+ 
+     let mut session = build_session(config).await;
++    legal::display_disclaimer();
+     session.headless(prompt_with_context).await?;
++    legal::display_always_disclaimer();
+ 
+     Ok(())
+ }
+diff --git a/crates/goose-cli/src/legal.rs b/crates/goose-cli/src/legal.rs
+new file mode 100644
+index 000000000..4f63937c8
+--- /dev/null
++++ b/crates/goose-cli/src/legal.rs
+@@ -0,0 +1,32 @@
++use console::style;
++use goose::config::Config;
++
++/// Checks whether the configured provider is the Red Hat proxy.
++fn is_provider_rhel() -> bool {
++    let rhel_provider: &str = "rhel_cla";
++    Config::global()
++        .get_goose_provider()
++        .ok()
++        .map(|p| p.to_lowercase().contains(rhel_provider))
++        .unwrap_or(false)
++}
++
++/// Displays the initial legal disclaimer about AI usage and data handling.
++pub fn display_disclaimer() {
++    let disclaimer = "⚠️ This tool uses AI technology. Do not include any personal information or \
++        other sensitive information in your input. Interactions may be used to \
++        improve Red Hat's products or services.\n";
++    let colored_disclaimer = style(disclaimer).yellow();
++    if is_provider_rhel() {
++        println!("{}", colored_disclaimer);
++    }
++}
++
++/// Displays a short reminder to review AI-generated content.
++pub fn display_always_disclaimer() {
++    let disclaimer = "Always review AI-generated content prior to use.";
++    let colored_disclaimer = style(disclaimer).yellow().dim();
++    if is_provider_rhel() {
++        println!("{}", colored_disclaimer);
++    }
++}
+diff --git a/crates/goose-cli/src/lib.rs b/crates/goose-cli/src/lib.rs
+index 3996e0796..32b14e706 100644
+--- a/crates/goose-cli/src/lib.rs
++++ b/crates/goose-cli/src/lib.rs
+@@ -1,5 +1,6 @@
+ pub mod cli;
+ pub mod commands;
++pub mod legal;
+ pub mod logging;
+ pub mod project_tracker;
+ pub mod recipes;
+diff --git a/crates/goose-cli/src/session/mod.rs b/crates/goose-cli/src/session/mod.rs
+index 26447c5d7..d4f033a88 100644
+--- a/crates/goose-cli/src/session/mod.rs
++++ b/crates/goose-cli/src/session/mod.rs
+@@ -441,6 +441,7 @@ impl CliSession {
+         history_manager.load(&mut editor);
+ 
+         output::display_greeting();
++        crate::legal::display_disclaimer();
+         loop {
+             self.display_context_usage().await?;
+ 
+@@ -605,6 +606,7 @@ impl CliSession {
+                     "\n{}",
+                     console::style(format!("⏱️  Elapsed time: {}", elapsed_str)).dim()
+                 );
++                crate::legal::display_always_disclaimer()
+             }
+             RunMode::Plan => {
+                 let mut plan_messages = self.messages.clone();
+-- 
+2.53.0
+

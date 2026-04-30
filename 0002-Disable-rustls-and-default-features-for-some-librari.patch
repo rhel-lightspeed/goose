@@ -1,7 +1,7 @@
-From a46d7d8d988c37451ec489edb6627dbaf6cf02d3 Mon Sep 17 00:00:00 2001
+From 3c85c65251fb1a30ef1b9cc76edcbe1f5a61b837 Mon Sep 17 00:00:00 2001
 From: Rodolfo Olivieri <rodolfo.olivieri3@gmail.com>
 Date: Tue, 10 Feb 2026 12:06:30 -0300
-Subject: [PATCH 2/4] Disable rustls and default-features for some libraries
+Subject: [PATCH 2/6] Disable rustls and default-features for some libraries
 
 * Removed rustls features from reqwest, sqlx, tokio-tungstenite
 * Added runtime-tokio-native-tls feature for sqlx as the original one

@@ -1,7 +1,7 @@
-From 66c8648cc96c66dce3de852c306fc535873270ee Mon Sep 17 00:00:00 2001
+From b77006bf60dcb0bbe5f5e0b98e29dce0d0cb66d6 Mon Sep 17 00:00:00 2001
 From: Rodolfo Olivieri <rodolfo.olivieri3@gmail.com>
 Date: Wed, 4 Feb 2026 08:14:50 -0300
-Subject: [PATCH 1/4] Patch windows dependencies across workspace
+Subject: [PATCH 1/6] Patch windows dependencies across workspace
 
 Removed the following windows dependencies across the crates workspaces
 members as they are platform specific (windows)

@@ -1,7 +1,7 @@
-From c84ef27423275d1de3688322d04ccf0f863fbead Mon Sep 17 00:00:00 2001
+From 3948722f730b28ae4e70cabeabbf608ec5ad3747 Mon Sep 17 00:00:00 2001
 From: Rodolfo Olivieri <rodolfo.olivieri3@gmail.com>
 Date: Tue, 10 Feb 2026 12:07:23 -0300
-Subject: [PATCH 3/4] Patch code to use native-tls instead of rustls
+Subject: [PATCH 3/6] Patch code to use native-tls instead of rustls
 
 * Remove rustls default provider installation from lapstone tunnel
 * Patched providers/api_cilent.rs to allow using from_pkcs8_pem due to

@@ -31,30 +31,18 @@ jobs:
     # in case.
     timeout: 36000
     targets:
-      - fedora-43-x86_64
-      - fedora-43-aarch64
-      - fedora-43-ppc64le
-      - fedora-43-s390x
-
       - fedora-44-x86_64
       - fedora-44-aarch64
-      - fedora-44-ppc64le
-      - fedora-44-s390x
 
       - fedora-rawhide-x86_64
       - fedora-rawhide-aarch64
-      - fedora-rawhide-ppc64le
-      - fedora-rawhide-s390x
 
-      - epel-9-x86_64
-      - epel-9-aarch64
-      - epel-9-ppc64le
-      - epel-9-s390x
+      - rhel-9-x86_64
+      - rhel-9-aarch64
 
-      - epel-10-x86_64
-      - epel-10-aarch64
-      - epel-10-ppc64le
-      - epel-10-s390x
+      - rhel-10-x86_64
+      - rhel-10-aarch64
+
 
 
   # Build on new commit to main branch
@@ -66,11 +54,6 @@ jobs:
     # in case.
     timeout: 36000
     targets:
-      - fedora-43-x86_64
-      - fedora-43-aarch64
-      - fedora-43-ppc64le
-      - fedora-43-s390x
-
       - fedora-44-x86_64
       - fedora-44-aarch64
       - fedora-44-ppc64le
@@ -90,3 +73,12 @@ jobs:
       - epel-10-aarch64
       - epel-10-ppc64le
       - epel-10-s390x
+
+      - rhel-9-x86_64
+      - rhel-9-aarch64
+      - rhel-9-s390x
+
+      - rhel-10-x86_64
+      - rhel-10-aarch64
+      - rhel-10-s390x
+      - rhel-10-ppc64le

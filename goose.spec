@@ -39,40 +39,44 @@ Source7:        mermaid.license
 Source99:       generate-vendor-tarball.sh
 
 # Remove windows specific dependencies (winapi/winreg) from goose crates.
-Patch:          0001-Patch-windows-dependencies-across-workspace.patch
+Patch:          0000-Patch-windows-dependencies-across-workspace.patch
 # This patch disable the default features for some dependencies that were
 # bringing unwanted crates, like `rustls` or `ring` and swap to use
 # `native-tls` where is possible for the other dependencies.
-Patch1:         0002-Disable-rustls-and-default-features-for-some-librari.patch
+Patch1:         0001-Disable-rustls-and-default-features-for-some-librari.patch
 # Patch the source code of goose to make use of `native-tls` instead of
 # `rustls`. This is not contained in the above patch on purpose, so we can
 # re-create the dependencies patch easily without having to modify source code
 # when a new version is pushed.
-Patch2:         0003-Patch-code-to-use-native-tls-instead-of-rustls.patch
+Patch2:         0002-Patch-code-to-use-native-tls-instead-of-rustls.patch
 # Downstream patch to update tar for version 0.4.45. This patch can be dropped
 # once https://issues.redhat.com/browse/RSPEED-2434 is fixed.
-Patch3:         0004-Fix-for-CVE-2026-33056-on-tar.patch
+Patch3:         0003-Fix-for-CVE-2026-33056-on-tar.patch
 # This fix is intended to be EPEL 9 only, but for convenience, we will try to
 # use it on all versions since that should not be a breaking change across any
 # target and the functionality should be the same.
-Patch4:         0005-Fix-sql-statement-from-session-manager.patch
-# Add disclaimer as required by legal only on RHEL
-%if 0%{?rhel}
-Patch5:         0006-Include-legal-message-for-goose-proxy-provider.patch
-%endif
+Patch4:         0004-Fix-sql-statement-from-session-manager.patch
 # Backport of https://github.com/aaif-goose/goose/pull/8118
 # Sets permissions of newly created secrets.yaml file to 0600.
-Patch6:         0007-Better-default-permissions-for-secrets.patch
+Patch5:         0005-Better-default-permissions-for-secrets.patch
 
+## Downstream only patches
+#
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
 # files that comes with the vendored crate, and instead, build from system
 # libraries.
 # The patch was taken from:
 #   * https://src.fedoraproject.org/rpms/rust-ring/blob/d6d681ed07c088671cb5accc0102470b059a5e88/f/rust-ring.spec#_24
-Patch1001:      1001-Downstream-only-never-use-pre-generated-object-files.patch
+Patch0100:      0100-Downstream-only-never-use-pre-generated-object-files.patch
 # Raise recursion limit to fix test failures. This is fixed upstream so is only needed
 # to prevent test failures when packaging.
-Patch1002:      1002-Raise-recursion-limit.patch
+Patch0101:      0101-Raise-recursion-limit.patch
+
+## RHEL only patches
+# Patches in the 800-899 range are applied only to RHEL.
+#
+# Add disclaimer as required by legal only on RHEL
+Patch800:       0800-Include-legal-message-for-goose-proxy-provider.patch
 
 # i686: https://fedoraproject.org/wiki/Changes/EncourageI686LeafRemoval
 ExcludeArch:    %{ix86}
@@ -327,7 +331,15 @@ faster and focus on innovation.}
 %description    %{_description}
 
 %prep
-%autosetup -p1 -a1
+
+# Break the patches into batches since
+# patches >= 800 are only applied on RHEL systems.
+%setup -q -a1
+%autopatch -p1 -M 799
+
+%if 0%{?rhel}
+%autopatch -p1 -m 800 -M 899
+%endif
 
 # Copy JavaScript/CSS license text into %%{name}-%%{version} folder.
 cp -pav %{SOURCE2} %{SOURCE3} %{SOURCE4} %{SOURCE5} %{SOURCE6} %{SOURCE7} .

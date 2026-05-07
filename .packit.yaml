@@ -31,15 +31,10 @@ jobs:
     # in case.
     timeout: 36000
     targets:
-      fedora-43-x86_64: &opts
+      fedora-43-x86_64:
         without_opts:
           - check
-      fedora-44-x86_64: *opts
-      fedora-rawhide-x86_64: *opts
-      epel-9-x86_64: *opts
-      epel-10-x86_64: *opts
-      rhel-9-x86_64: *opts
-      rhel-10-x86_64: *opts
+
 
 
   # Build on new commit to main branch

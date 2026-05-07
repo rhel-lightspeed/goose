@@ -22,6 +22,49 @@ actions:
   fix-spec-file:
     - sed -Ei 's|^(Source:[[:space:]]+)goose-[0-9]+(\.[0-9]+)*-vendor\.tar\.xz|\1%{url}/archive/v%{version}/%{name}-%{version}.tar.gz|' goose.spec
 
+_:
+  disable_checks: &disable_checks
+    without_opts:
+      - check
+
+  pr_targets: &pr_targets
+    fedora-43-x86_64: *disable_checks
+    fedora-44-x86_64: *disable_checks
+    fedora-rawhide-x86_64: *disable_checks
+    epel-9-x86_64: *disable_checks
+    epel-10-x86_64: *disable_checks
+    rhel-9-x86_64: *disable_checks
+    rhel-10-x86_64: *disable_checks
+
+  targets: &targets
+    <<: *pr_targets
+    fedora-43-aarch64: *disable_checks
+    fedora-43-ppc64le: *disable_checks
+    fedora-43-s390x: *disable_checks
+
+    fedora-44-aarch64: *disable_checks
+    fedora-44-ppc64le: *disable_checks
+    fedora-44-s390x: *disable_checks
+
+    fedora-rawhide-aarch64: *disable_checks
+    fedora-rawhide-ppc64le: *disable_checks
+    fedora-rawhide-s390x: *disable_checks
+
+    epel-9-aarch64: *disable_checks
+    epel-9-ppc64le: *disable_checks
+    epel-9-s390x: *disable_checks
+
+    epel-10-aarch64: *disable_checks
+    epel-10-ppc64le: *disable_checks
+    epel-10-s390x: *disable_checks
+
+    rhel-9-aarch64: *disable_checks
+    rhel-9-s390x: *disable_checks
+
+    rhel-10-aarch64: *disable_checks
+    rhel-10-s390x: *disable_checks
+    rhel-10-ppc64le: *disable_checks
+
 jobs:
   - job: copr_build
     trigger: pull_request
@@ -30,11 +73,7 @@ jobs:
     # Goose builds usually take a long time to finish, so we set it to 5h, just
     # in case.
     timeout: 36000
-    targets:
-      fedora-43-x86_64:
-        without_opts:
-          - check
-
+    targets: *pr_targets
 
 
   # Build on new commit to main branch
@@ -45,37 +84,4 @@ jobs:
     # Goose builds usually take a long time to finish, so we set it to 5h, just
     # in case.
     timeout: 36000
-    targets:
-      - fedora-43-x86_64
-      - fedora-43-aarch64
-      - fedora-43-ppc64le
-      - fedora-43-s390x
-
-      - fedora-44-x86_64
-      - fedora-44-aarch64
-      - fedora-44-ppc64le
-      - fedora-44-s390x
-
-      - fedora-rawhide-x86_64
-      - fedora-rawhide-aarch64
-      - fedora-rawhide-ppc64le
-      - fedora-rawhide-s390x
-
-      - epel-9-x86_64
-      - epel-9-aarch64
-      - epel-9-ppc64le
-      - epel-9-s390x
-
-      - epel-10-x86_64
-      - epel-10-aarch64
-      - epel-10-ppc64le
-      - epel-10-s390x
-
-      - rhel-9-x86_64
-      - rhel-9-aarch64
-      - rhel-9-s390x
-
-      - rhel-10-x86_64
-      - rhel-10-aarch64
-      - rhel-10-s390x
-      - rhel-10-ppc64le
+    targets: *targets

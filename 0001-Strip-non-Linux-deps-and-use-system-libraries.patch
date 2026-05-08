@@ -1,0 +1,105 @@
+From 52a210785751e703397f42554b5d653c7f85dab2 Mon Sep 17 00:00:00 2001
+From: Rodolfo Olivieri <rolivier@redhat.com>
+Date: Thu, 28 May 2026 09:00:28 -0300
+Subject: [PATCH] strip non-linux
+
+---
+ Cargo.toml                     | 10 ++--------
+ crates/goose-cli/Cargo.toml    |  4 ----
+ crates/goose-server/Cargo.toml |  3 ---
+ crates/goose/Cargo.toml        | 11 -----------
+ 4 files changed, 2 insertions(+), 26 deletions(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index 27e8432..bb1bd7e 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -1,8 +1,6 @@
+ [workspace]
+ members = [
+     "crates/*",
+-    # Mainly for cargo-machete to not error out during inspection.
+-    "vendor/v8",
+ ]
+ resolver = "2"
+ 
+@@ -44,7 +42,7 @@ http = { version = "1.1", default-features = false, features = ["std"] }
+ ignore = { version = "0.4.12", default-features = false }
+ include_dir = { version = "0.7", default-features = false }
+ indoc = { version = "2", default-features = false }
+-keyring = { version = "3.6.3", default-features = false, features = ["vendored"] }
++keyring = { version = "3.6.3", default-features = false }
+ lru = { version = "0.16", default-features = false }
+ once_cell = { version = "1.21.3", default-features = false, features = ["std"] }
+ rand = { version = "0.8.5", default-features = false, features = ["std"] }
+@@ -72,7 +70,7 @@ utoipa = { version = "4.2", default-features = false }
+ uuid = { version = "1.18", default-features = false, features = ["v4", "std"] }
+ webbrowser = { version = "1", default-features = false }
+ which = { version = "8", default-features = false, features = ["real-sys"] }
+-winapi = { version = "0.3.9", default-features = false, features = ["wincred", "std"] }
++
+ wiremock = { version = "0.6", default-features = false }
+ zip = { version = "8", default-features = false, features = ["deflate"] }
+ serial_test = { version = "3", default-features = false }
+@@ -109,7 +107,3 @@ llama-cpp-sys-2 = { version = "=0.1.146", default-features = false }
+ # They are just here to pin the version, and can be removed if PCTX updates temporal_rs
+ icu_calendar = { version = "=2.1.1", default-features = false }
+ icu_locale = { version = "=2.1.1", default-features = false }
+-
+-[patch.crates-io]
+-v8 = { path = "vendor/v8" }
+-cudaforge = { git = "https://github.com/jbg/cudaforge", rev = "e7c1967340e40673db98dc9e17da0f04834a456f" }
+diff --git a/crates/goose-cli/Cargo.toml b/crates/goose-cli/Cargo.toml
+index e6c704e..0de4e1f 100644
+--- a/crates/goose-cli/Cargo.toml
++++ b/crates/goose-cli/Cargo.toml
+@@ -65,10 +65,6 @@ sigstore-verify = { version = "0.8", default-features = false, optional = true }
+ axum.workspace = true
+ clap_complete_nushell = { version = "4", default-features = false }
+ 
+-[target.'cfg(target_os = "windows")'.dependencies]
+-anstream = { version = "1", default-features = false, features = ["wincon"] }
+-winapi = { workspace = true }
+-
+ [features]
+ default = [
+     "code-mode",
+diff --git a/crates/goose-server/Cargo.toml b/crates/goose-server/Cargo.toml
+index c1f04fc..30bd3cd 100644
+--- a/crates/goose-server/Cargo.toml
++++ b/crates/goose-server/Cargo.toml
+@@ -91,9 +91,6 @@ aws-lc-rs = { version = "1.17", default-features = false, optional = true }
+ openssl = { version = "0.10.66", default-features = false, optional = true }
+ pem = { version = "3.0.2", default-features = false, features = ["std"] }
+ 
+-[target.'cfg(windows)'.dependencies]
+-winreg = { version = "0.56", default-features = false }
+-
+ [[bin]]
+ name = "goosed"
+ path = "src/main.rs"
+diff --git a/crates/goose/Cargo.toml b/crates/goose/Cargo.toml
+index fccd7db..e0528d1 100644
+--- a/crates/goose/Cargo.toml
++++ b/crates/goose/Cargo.toml
+@@ -216,17 +216,6 @@ icu_calendar = { version = "=2.1.1", default-features = false }
+ icu_locale = { version = "=2.1.1", default-features = false }
+ llama-cpp-sys-2 = { workspace = true, optional = true }
+ 
+-[target.'cfg(target_os = "windows")'.dependencies]
+-winapi = { workspace = true }
+-keyring = { workspace = true, features = ["windows-native"], optional = true }
+-
+-# Platform-specific GPU acceleration for Whisper and local inference
+-[target.'cfg(target_os = "macos")'.dependencies]
+-candle-core = { workspace = true, features = ["metal"], optional = true }
+-candle-nn = { workspace = true, features = ["metal"], optional = true }
+-llama-cpp-2 = { workspace = true, features = ["sampler", "metal", "mtmd"], optional = true }
+-keyring = { workspace = true, features = ["apple-native"], optional = true }
+-
+ [target.'cfg(target_os = "linux")'.dependencies]
+ keyring = { workspace = true, features = ["sync-secret-service"], optional = true }
+ libc = { version = "0.2.182", default-features = false, features = ["std"] }
+-- 
+2.54.0
+

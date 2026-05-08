@@ -1,0 +1,42 @@
+diff --git a/crates/goose/src/session/session_manager.rs b/crates/goose/src/session/session_manager.rs
+index 5c6559b..369d97a 100644
+--- a/crates/goose/src/session/session_manager.rs
++++ b/crates/goose/src/session/session_manager.rs
+@@ -1084,7 +1084,7 @@ impl SessionStorage {
+         let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
+ 
+         let today = chrono::Utc::now().format("%Y%m%d").to_string();
+-        let session = sqlx::query_as(
++        sqlx::query(
+             r#"
+                 INSERT INTO sessions (id, name, user_set_name, session_type, working_dir, extension_data, goose_mode)
+                 VALUES (
+@@ -1100,8 +1100,7 @@ impl SessionStorage {
+                     '{}',
+                     ?
+                 )
+-                RETURNING *
+-                "#,
++            "#,
+         )
+             .bind(&today)
+             .bind(&today)
+@@ -1109,9 +1108,17 @@ impl SessionStorage {
+             .bind(session_type.to_string())
+             .bind(&*working_dir.to_string_lossy())
+             .bind(goose_mode.to_string())
+-            .fetch_one(&mut *tx)
++            .execute(&mut *tx)
+             .await?;
+ 
++        let session: Session = sqlx::query_as(
++            r#"
++                SELECT * FROM sessions WHERE rowid = last_insert_rowid()
++            "#,
++        )
++        .fetch_one(&mut *tx)
++        .await?;
++
+         tx.commit().await?;
+         #[cfg(feature = "telemetry")]
+         crate::posthog::emit_session_started();

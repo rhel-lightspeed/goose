@@ -1,0 +1,110 @@
+* Thu May 22 2025 Rodolfo Olivieri <rolivier@redhat.com> - 1.36.0-1
+- Update to version 1.36.0
+- goose review local code review command
+- /goal command for agent self-evaluation before finishing
+- Hooks system for PreToolUse denial and extensibility
+- Slash commands (built-in, skill, recipe) in ACP server
+- Open-plugins generalization and skills
+- Summon subagent instructions
+- Unified thinking effort control across all providers
+- NEAR AI Cloud provider
+- Scaleway provider
+- Vercel AI Gateway provider
+- Atomic Chat declarative OpenAI-compatible provider
+- Routstr declarative provider
+- FuturMix provider
+- oMLX declarative provider
+- Harbor eval runner
+- MAX_CODE_BLOCK_LINES configurable via env vars
+- Honor GOOSE_FAST_MODEL env var in ModelConfig
+- GPT-5.5 in known models
+- Paginate ACP session list
+- Pass session cwd param to ACP providers
+- Opt-in to Vercel AI gateway leaderboard
+- GOOSE_OAUTH_CALLBACK_PORT for stable OAuth redirect_uri
+- Proactive OAuth token refresh to avoid re-auth on every session
+- Strip chain-of-thought markers from custom provider output
+- Nushell terminal and completion support
+- Optional --parameters flag for scheduled recipes
+- Quarterly option for scheduler
+- GitHub Copilot /responses API support
+- Projects as backend sources with system prompt injection
+- Linux musl CLI builds
+- GOOSE_DISABLE_TOOL_CALL_SUMMARY env var
+- Tolerate missing responses output
+- Serialize per-session agent creation to stop duplicate MCP init
+- Respect GOOSE_MAX_TURNS in gateway sessions
+- Send empty object instead of null for Anthropic tool_use input
+- Preserve thinking content for provider context
+- Mention configurable timeout env vars in Ollama stream stall error
+- Include full recipe parameter details in load/discovery output
+- Use context limit from /model/info for LiteLLM custom models
+- Plain > prompt instead of goose emoji in CLI
+- Emit trace_output as span attribute instead of event
+- Check file fallback when keyring has no entry
+- Use current_exe() instead of PATH lookup when spawning goose
+- Set TCP_USER_TIMEOUT on streamable HTTP clients
+- Activate custom provider after adding via configure
+- Flush OTLP traces reliably on exit with configurable timeout
+- Reduce excessive MISSING_TRANSLATION warnings for fallback locales
+- Improve Telegram gateway error reporting and connection reliability
+- Zero out cost for local providers (ollama, local)
+- Persist accumulated cost in session DB to survive reload
+- Prevent tool-use marker leakage in toolshim output
+- Re-apply canonical limits when delegate overrides model
+- Report cumulative total_tokens in stream-json/json output
+- Refresh GCP metadata server token on expiration
+- Apply request_params to outgoing OpenAI API payload
+- Gemini 3.x known_location Global routing entries
+- Coalesce streaming Thinking deltas and list available tools on not-found
+- Honor Retry-After on 429 responses
+- Preserve user-set session name for recipe-based chats
+- Enforce exp independently of MAX_TOKEN_AGE_SECONDS in OIDC proxy
+- Omit max_tokens for OpenAI-compatible requests when unset
+- Set correct MCP-app host capabilities
+- Normalize nullable schemas for Vertex Gemini compatibility
+- Isolate GitHub recipe temp paths
+- Set X-Initiator header on GitHub Copilot requests
+- Honor dynamic_models: false in declarative provider configs
+- Cache trailing message for stable prefix across Bedrock agent turns
+- Case-insensitive model name lookup for context_limit
+- Handle Bedrock ReasoningContent blocks gracefully
+- Ensure parallel tool image responses don't interleave on Databricks
+- Insert tool pair summaries at chronological position in conversation
+- Enable SQLite foreign key enforcement in session pool
+- Accept null tool_call arguments in OpenAI streaming chunks
+- Synchronously reap ACP child to avoid SIGCHLD race
+- Elicitation fixes
+- Return 400 instead of panicking on invalid CSP header value
+- Keep SSE reconnect loop alive on long disconnects
+- Convert quoted numeric config values to numbers if needed
+- Use appInfo instead of clientInfo in MCP Apps init handshake
+- Use mkdir -p for self-test workspace initialization
+- Exclude preprompt from session title generation
+- Prevent login-shell PATH probe from suspending goose on startup
+- Handle non-interactive terminal in goose configure
+- Use python3 in developer extension instructions
+- Build summon instructions per turn
+- Protocol cleanup
+- Dependency hygiene
+- Prompt injection mitigation: update pattern-based detection to reduce FPs
+- Surface resolved Databricks model metadata
+- Include request URL in provider error messages
+- Flag for login shell PATH
+- Structured per-provider config block, non-destructive provider switching
+- Preserve thinking content for providers that require it
+- Dynamically refresh skill instructions each turn
+- Show tool name in approval prompt
+- Location column in CLI skills table
+- Consolidate logging setup into shared helper
+- Support optional api_key configuration for declarative openai-engine providers
+- Recipe discovery and execution in ACP server
+- Group consecutive tool calls into one summarized chain card
+- Replace artifact heuristics and regexes with protocol messages
+- Improvements to LM Studio declarative provider
+- Parallelize provider resolution and eagerly init SQLite pool
+- ACP streamable HTTP spec compliance
+- Refresh onboarding when provider catalog loads
+- Redesign extensions configuration
+- Redesign skills library backend
+- Mergeable configs cleanup

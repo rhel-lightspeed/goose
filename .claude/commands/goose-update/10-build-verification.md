@@ -19,10 +19,9 @@ next step.
 
 ## 10.2 Changelog
 
-The spec uses `%autochangelog` — do NOT manually edit the changelog. The
-changelog is auto-generated from git commit messages by `rpmautospec` at build
-time. Ensure the commit message for this update is descriptive (e.g.,
-"Update to version {TARGET_VERSION}").
+The changelog is maintained in a separate `changelog` file with upstream release
+notes. Run Phase 11 (`goose-update/11-changelog-update.md`) to update it with
+the new version's upstream changelog.
 
 ## 10.3 Suggest Next Steps
 

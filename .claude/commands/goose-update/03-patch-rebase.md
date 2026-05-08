@@ -9,22 +9,44 @@ Requires: Phase 2 completed (new source tarball downloaded).
 
 ## Patch Series Structure
 
-**0000-0099 patches** — Applied to the goose source tree:
-- `0000` — Remove Windows-specific dependencies (winapi/winreg) from Cargo.toml
-  files across the workspace
-- `0001` — Disable rustls and default features for dependencies, switch to
-  native-tls in Cargo.toml
-- `0002` — Patch Rust source code to use native-tls instead of rustls (separate
-  from 0001 so Cargo.toml patches can be regenerated independently)
-- `0003+` — CVE fixes, downstream-only fixes
+Patches are organized into three categories by purpose:
 
-**0100-0799 patches** — Target vendored crates (paths start with `vendor/`,
-applied from the source root via `%autopatch -p1 -M 799`):
+### Dependency patches (0000-0002) — Cargo.toml modifications
+
+These modify `Cargo.toml` files across the workspace and affect dependency
+resolution. They are listed in `generate-vendor-tarball.sh`'s `PATCHES` array
+and applied both during vendor tarball generation and during the RPM build.
+
+- `0000` — **Upstream dependency hygiene port**: Upgrades otel, removes git
+  overrides from `[patch.crates-io]`, sets `default = []` on goose lib crate,
+  puts nostr and sigstore-verify behind feature flags. Based on upstream PRs
+  that haven't yet been released.
+- `0001` — **Platform cleanup**: Removes Windows/macOS platform deps (winapi,
+  winreg, metal, apple-native keyring), the vendor/v8 workspace member, and
+  all remaining `[patch.crates-io]` entries (v8, cudaforge). Also removes the
+  keyring `vendored` feature. Does NOT touch `[package.metadata.cargo-machete]`
+  sections — those are development-only and irrelevant to packaging.
+- `0002` — **Feature flags**: Sets downstream default features to
+  `aws-providers`, `native-tls`, `telemetry`, `otel`, `system-keyring` in
+  goose-cli and goose-server. Disables default features for jsonschema, config,
+  and aws-config. Switches sqlx to `sqlite-unbundled`.
+
+### Code patches (0003-0099) — Rust source code changes
+
+These modify `.rs` files or test snapshots. They do NOT affect dependency
+resolution and are NOT listed in the vendor tarball script.
+
+- `0003` — EPEL 9 SQLite compatibility (avoids RETURNING statement)
+- `0004` — Snapshot test update for disabled code-mode
+
+### Vendor patches (0100-0799) — Target vendored crates
+
+Applied from the source root (paths start with `vendor/`):
+
 - `0100` — Patch ring's build.rs to never use pre-generated object files
-- `0101` — Raise recursion limit for packaging
 
-**0800-0899 patches** — RHEL-only (applied conditionally in `%prep` via
-`%autopatch -p1 -m 800 -M 899` inside `%if 0%{?rhel}`):
+### RHEL-only patches (0800-0899) — Conditional on `%if 0%{?rhel}`
+
 - `0800` — Include legal disclaimer for goose proxy provider
 
 ## 3.1 Extract and Test Patches
@@ -54,30 +76,28 @@ For each patch, determine:
 4. **No longer relevant** — If the upstream code changed so the patch target
    no longer exists, investigate and report to user
 
-## 3.3 Regenerate Dependency Patches (0000 and 0001)
+## 3.3 Regenerate Dependency Patches (0000, 0001, 0002)
 
 These patches modify `Cargo.toml` files across the workspace. When upstream
-changes dependencies, these patches almost always need regenerating.
+changes dependencies, they almost always need regenerating.
 
-**Process to regenerate 0000 (Windows deps removal):**
+**Process to regenerate:**
 
-1. In the extracted source, identify all `Cargo.toml` files that reference
-   `winapi`, `winreg`, `windows-sys`, or other Windows-only crates in
-   non-platform-conditional dependencies
-2. Remove those dependencies (they should be behind
-   `[target.'cfg(windows)'.dependencies]` but sometimes aren't)
-3. Generate patch with `git diff`
+1. Extract the new source into a temp directory and `git init`
+2. For Patch 0000 (upstream port): check if the upstream PRs it ports have
+   been merged into the new release. If so, the patch can be dropped. If not,
+   apply the same logical changes (otel upgrade, git-patch removal, feature
+   gating) to the new source.
+3. For Patch 0001 (platform cleanup): identify all Windows/macOS platform deps
+   and `[patch.crates-io]` entries, remove them. Do NOT touch
+   `[package.metadata.cargo-machete]` sections.
+4. For Patch 0002 (feature flags): set default features in goose-cli and
+   goose-server to: `aws-providers`, `native-tls`, `telemetry`, `otel`,
+   `system-keyring`. Disable default features for jsonschema, config,
+   aws-config. Switch sqlx to `sqlite-unbundled`.
+5. Generate each patch with `git diff` after committing the previous one.
 
-**Process to regenerate 0001 (rustls → native-tls):**
-
-1. In all `Cargo.toml` files, find dependencies using `rustls` or
-   `rustls-tls` features
-2. Switch them to `native-tls` feature
-3. Disable default features where they pull in rustls
-4. Ensure `native-tls` feature flag is always enabled for the workspace
-5. Generate patch with `git diff`
-
-**CRITICAL:** Patches 0000 and 0001 are also listed in
+**CRITICAL:** Patches 0000, 0001, and 0002 are listed in
 `generate-vendor-tarball.sh`'s `PATCHES` array because they affect
 `Cargo.toml`/`Cargo.lock` which changes what gets vendored. If these patches
 change, update the `PATCHES` array in that script too.

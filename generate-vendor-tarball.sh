@@ -3,10 +3,9 @@ set -euo pipefail
 
 # List of patches to be applied in the vendored folder
 PATCHES=(
-    "0000-Patch-windows-dependencies-across-workspace.patch" 
-    "0001-Disable-rustls-and-default-features-for-some-librari.patch" 
-    "0003-Fix-for-CVE-2026-33056-on-tar.patch" 
-    "0006-Update-openssl-transitive-dependency.patch"
+    "0000-Add-tui-feature-flag-for-tui-command.patch"
+    "0001-Strip-non-Linux-deps-and-use-system-libraries.patch"
+    "0002-Set-downstream-feature-flags.patch"
 )
 
 check_required_tools() {
@@ -51,7 +50,6 @@ for patch in "${PATCHES[@]}"; do
     patch -p1 <"../$patch" 
     echo "[!] Applied patch $patch"
 done
-
 
 # Target platforms matching Fedora/EPEL build architectures
 PLATFORMS=(

@@ -1,6 +1,30 @@
 %bcond check 1
-# Limit parallel processes to prevent OOM during build:
-%global _smp_tasksize_proc 4096
+
+# Goose is being shipped in RHEL 9.x extensions, and in such environment, we
+# don't have access to `_smp_tasksize_proc` due to it being added a newer
+# version of rpm, and to allow our package to build in such environment and to
+# avoid OOM during our builds, we have borrowed a macro from the rust commpiler
+# package to allow us to set constraints in that environment.
+#   * https://src.fedoraproject.org/rpms/rust/blob/rawhide/f/rust.spec#_820 
+%if %undefined constrain_build
+%define constrain_build(m:) %{lua:
+  for l in io.lines('/proc/meminfo') do
+    if l:sub(1, 9) == "MemTotal:" then
+      local opt_m = math.tointeger(rpm.expand("%{-m*}"))
+      local mem_total = math.tointeger(string.match(l, "MemTotal:%s+(%d+)"))
+      local cpu_limit = math.max(1, mem_total // (opt_m * 1024))
+      if cpu_limit < math.tointeger(rpm.expand("%_smp_build_ncpus")) then
+        rpm.define("_smp_build_ncpus " .. cpu_limit)
+      end
+      break
+    end
+  end
+}
+%endif
+
+%constrain_build -m 6144
+
+%global rustflags_codegen_units 16
 
 Name:           goose
 # We are currently stuck on this stable version due to some constraints related
@@ -221,6 +245,13 @@ BuildRequires:  libzstd-devel
 #   https://gitlab.com/fedora/legal/fedora-license-data/-/issues/516
 # - Rust: MIT
 Provides:       bundled(sublime-syntax) = 4075~gitfa6b862
+
+# In RHEL 9, we depend on sqlite3 3.34.1-10 as it contains a necessary fix for
+# exporting the `sqlite3_deserialize` function for goose builds.
+# More info on: https://redhat.atlassian.net/browse/RHEL-155950
+%if 0%{?rhel} == 9
+Requires:       sqlite-libs >= 3.34.1-10
+%endif
 
 # Third-party language definitions for syntax highlighting The `syntect` crate
 # is bundling all of sublimehq/Packages syntax definitions. To achieve the

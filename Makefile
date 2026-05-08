@@ -58,3 +58,7 @@ logs:
 .PHONY: sync
 sync:
 	scp $(FILES_TO_SYNC) $(FAS_USERNAME)@fedorapeople.org:/home/fedora/$(FAS_USERNAME)/public_html/$(NAME)
+
+.PHONY: freeze
+freeze:
+	./scripts/freeze.py --python-versions 3.14

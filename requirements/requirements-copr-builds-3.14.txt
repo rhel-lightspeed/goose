@@ -1,0 +1,14 @@
+certifi==2026.4.22
+charset-normalizer==3.4.7
+copr==2.6
+filelock==3.29.0
+idna==3.13
+markdown-it-py==4.2.0
+mdurl==0.1.2
+munch==4.0.0
+Pygments==2.20.0
+requests==2.33.1
+requests-toolbelt==1.0.0
+rich==15.0.0
+setuptools==82.0.1
+urllib3==2.7.0

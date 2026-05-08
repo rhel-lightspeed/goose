@@ -1,0 +1,34 @@
+name: Scheduled Copr Build
+
+on:
+  schedule:
+    # Run daily at midnight UTC
+    - cron: "0 0 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  copr-build:
+    name: Trigger Copr Builds
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6.0.2
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+
+      - name: Install dependencies
+        run: pip install --requirement requirements/requirements-copr-builds-3.14.txt
+
+      - name: Trigger builds
+        env:
+          COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
+          COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
+          COPR_USERNAME: ${{ secrets.COPR_USERNAME }}
+        run: ./scripts/trigger_builds.py --no-monitor

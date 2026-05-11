@@ -68,7 +68,7 @@ export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
 rm -rf vendor
 
 echo "[+] Generating vendor folder (Linux-only via cargo-vendor-filterer)..."
-cargo vendor-filterer "${PLATFORM_ARGS[@]}" --versioned-dirs >/dev/null 2>&1
+cargo vendor-filterer "${PLATFORM_ARGS[@]}" --versioned-dirs
 
 echo "[+] Generating tarball of vendor folder..."
 tar Jcf "../$NAME-$VERSION-vendor.tar.xz" vendor/ >/dev/null 2>&1

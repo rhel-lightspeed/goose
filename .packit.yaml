@@ -60,6 +60,7 @@ _:
 
     rhel-9-aarch64: *disable_checks
     rhel-9-s390x: *disable_checks
+    rhel-9-ppc64le: *disable_checks
 
     rhel-10-aarch64: *disable_checks
     rhel-10-s390x: *disable_checks

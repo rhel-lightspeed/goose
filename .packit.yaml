@@ -14,6 +14,7 @@ actions:
   # The last setp here is required by Packit to return the archive name
   # https://packit.dev/docs/configuration/actions#create-archive
   create-archive:
+    - bash -c "cargo install cargo-vendor-filterer@0.5.18"
     - bash -c "./generate-vendor-tarball.sh"
     - bash -c "ls -1 goose*.tar.xz"
   # We fix the first source of the specfile because packit just understands

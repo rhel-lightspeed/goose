@@ -47,8 +47,28 @@ for patch in "${PATCHES[@]}"; do
     echo "[!] Applied patch $patch"
 done
 
-echo "[+] Generating vendor folder..."
-cargo vendor --versioned-dirs >/dev/null 2>&1
+
+# Target platforms matching Fedora/EPEL build architectures
+PLATFORMS=(
+    x86_64-unknown-linux-gnu
+    aarch64-unknown-linux-gnu
+    s390x-unknown-linux-gnu
+    powerpc64le-unknown-linux-gnu
+)
+
+PLATFORM_ARGS=()
+for platform in "${PLATFORMS[@]}"; do
+    PLATFORM_ARGS+=("--platform=$platform")
+done
+
+# Ensure ~/.cargo/bin is in PATH (cargo install places binaries there)
+export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
+
+# Remove the in-tree vendor/v8 shim to avoid conflicts with cargo-vendor-filterer
+rm -rf vendor
+
+echo "[+] Generating vendor folder (Linux-only via cargo-vendor-filterer)..."
+cargo vendor-filterer "${PLATFORM_ARGS[@]}" --versioned-dirs >/dev/null 2>&1
 
 echo "[+] Generating tarball of vendor folder..."
 tar Jcf "../$NAME-$VERSION-vendor.tar.xz" vendor/ >/dev/null 2>&1

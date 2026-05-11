@@ -82,6 +82,39 @@ reviews:
         - Proper variable quoting and shell safety
         - Targets are well-documented and follow conventions
 
+    - path: ".claude/commands/goose-update/*.md"
+      instructions: |
+        These are Claude Code slash command files that automate the goose RPM
+        version update process. Each file is one phase of a 10-phase workflow.
+        Review for:
+        - Accuracy of patch names/numbers against the actual spec and patch files
+        - Correct cross-references between phases (e.g., "see Phase 5.2")
+        - Shell commands use rg/fd where appropriate instead of grep/find
+        - Fedora packaging guideline references are correct and up to date
+        - Instructions are clear and actionable (not vague or ambiguous)
+        - The Patch Series Structure matches the current numbering scheme
+        - Workarounds reference upstream issues/PRs with valid links
+        - Compliance checklist items match what the spec actually requires
+
+    - path: "AGENTS.md"
+      instructions: |
+        This file provides instructions to AI coding agents (Claude Code) working
+        in this repository. Review for:
+        - Repository structure section matches the actual file layout
+        - Command table lists all commands under .claude/commands/goose-update/
+        - Self-improvement checklist covers all phase files that contain
+          version-specific data (patch names, crate tables, workarounds)
+        - Key constraints are accurate and complete
+
+    - path: "docs/*.md"
+      instructions: |
+        Human-readable documentation for the packaging workflow. Review for:
+        - Phase descriptions match the actual command files
+        - Flow diagram accurately represents phase dependencies
+        - Prerequisites list is complete and accurate
+        - Troubleshooting tips cover common failure modes
+        - No stale references to old file names or structures
+
   tools:
     shellcheck:
       enabled: true

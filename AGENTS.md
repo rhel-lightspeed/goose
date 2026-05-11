@@ -90,6 +90,11 @@ This keeps the instructions accurate for the next update cycle.
    - Update the Repository Structure section if files were added/removed
    - Update the patch numbering if the scheme changed
 
+7. **CodeRabbit config** (`.coderabbit.yaml`):
+   - If new file types or paths were added to the repo, add corresponding
+     `path_instructions` entries so CodeRabbit reviews them correctly
+   - Update existing path instructions if review criteria changed
+
 ### How to update
 
 After the user confirms the version update is complete:

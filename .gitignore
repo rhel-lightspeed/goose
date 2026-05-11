@@ -4,6 +4,7 @@
 *.src.rpm
 *.tar.gz
 goose-*
+!.claude/commands/goose-update/
 
 # Dev
 .python-version

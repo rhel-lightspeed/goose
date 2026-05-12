@@ -137,7 +137,8 @@ def monitor_builds(client: Client, builds: list[dict], poll_interval: float) -> 
     return all(b["state"] == "succeeded" for b in builds)
 
 
-def main() -> None:
+def parse_args() -> argparse.Namespace:
+    targeter = Targeter()
     parser = argparse.ArgumentParser(
         description="Trigger COPR builds for goose across all chroots.",
     )
@@ -179,10 +180,14 @@ def main() -> None:
         "chroots",
         nargs="*",
         help="Chroots to build for. If not specified, all chroots are used.",
-        default=CHROOTS,
+        default=targeter.chroots,
+        choices=targeter.chroots,
     )
-    args = parser.parse_args()
+    return parser.parse_args()
 
+
+def main() -> None:
+    args = parse_args()
     chroots = args.chroots
 
     print(f"Package: {PACKAGE}")

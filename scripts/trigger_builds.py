@@ -27,35 +27,21 @@ OWNER = "@rhel-lightspeed"
 PROJECT = "goose"
 PACKAGE = "goose"
 
-CHROOTS = [
-    "fedora-43-x86_64",
-    "fedora-43-aarch64",
-    "fedora-43-ppc64le",
-    "fedora-43-s390x",
-    "fedora-44-x86_64",
-    "fedora-44-aarch64",
-    "fedora-44-ppc64le",
-    "fedora-44-s390x",
-    "fedora-rawhide-x86_64",
-    "fedora-rawhide-aarch64",
-    "fedora-rawhide-ppc64le",
-    "fedora-rawhide-s390x",
-    "epel-9-x86_64",
-    "epel-9-aarch64",
-    "epel-9-ppc64le",
-    "epel-9-s390x",
-    "epel-10-x86_64",
-    "epel-10-aarch64",
-    "epel-10-ppc64le",
-    "epel-10-s390x",
-    "rhel-9-x86_64",
-    "rhel-9-aarch64",
-    "rhel-9-s390x",
-    "rhel-10-x86_64",
-    "rhel-10-aarch64",
-    "rhel-10-s390x",
-    "rhel-10-ppc64le",
-]
+FEDORA_MAJOR_VERSIONS = ("43", "44", "rawhide")
+RHEL_MAJOR_VERSIONS = ("9", "10")
+ARCH = (
+    "x86_64",
+    "aarch64",
+    "s390x",
+    "ppc64le",
+    "s390x",
+)
+TARGETS = (
+    *[f"fedora-{ver}" for ver in FEDORA_MAJOR_VERSIONS],
+    *[f"{dist}-{ver}" for dist in ("epel", "rhel") for ver in RHEL_MAJOR_VERSIONS],
+)
+CHROOTS = [f"{target}-{arch}" for target in TARGETS for arch in ARCH]
+
 
 TERMINAL_STATES = {"succeeded", "failed", "canceled", "forked"}
 
@@ -189,10 +175,11 @@ def main() -> None:
         "chroots",
         nargs="*",
         help="Chroots to build for. If not specified, all chroots are used.",
+        default=CHROOTS,
     )
     args = parser.parse_args()
 
-    chroots = args.chroots or CHROOTS
+    chroots = args.chroots
 
     print(f"Package: {PACKAGE}")
     print(f"Project: {OWNER}/{PROJECT}")

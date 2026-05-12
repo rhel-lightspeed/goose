@@ -31,4 +31,4 @@ jobs:
           COPR_LOGIN: ${{ secrets.COPR_LOGIN }}
           COPR_TOKEN: ${{ secrets.COPR_TOKEN }}
           COPR_USERNAME: ${{ secrets.COPR_USERNAME }}
-        run: ./scripts/trigger_builds.py --no-monitor
+        run: ./scripts/trigger_builds.py

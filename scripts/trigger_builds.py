@@ -50,7 +50,7 @@ class Targeter:
 
     fedora_versions: t.Iterable[str] = ("43", "44", "rawhide")
     rhel_versions: t.Iterable[str] = ("9", "10")
-    architectures: t.Iterable[str] = ("x86_64", "aarch64", "s390x", "ppc64le", "s390x")
+    architectures: t.Iterable[str] = ("x86_64", "aarch64", "s390x", "ppc64le")
     chroots: t.Iterable[str] = dataclasses.field(init=False)
 
     def __post_init__(self):

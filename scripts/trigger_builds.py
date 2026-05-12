@@ -9,9 +9,11 @@ Authentication requires a ~/.config/copr file or COPR_LOGIN, COPR_TOKEN, COPR_US
 """
 
 import argparse
+import dataclasses
 import os
 import sys
 import time
+import typing as t
 
 from pathlib import Path
 
@@ -27,22 +29,6 @@ OWNER = "@rhel-lightspeed"
 PROJECT = "goose"
 PACKAGE = "goose"
 
-FEDORA_MAJOR_VERSIONS = ("43", "44", "rawhide")
-RHEL_MAJOR_VERSIONS = ("9", "10")
-ARCH = (
-    "x86_64",
-    "aarch64",
-    "s390x",
-    "ppc64le",
-    "s390x",
-)
-TARGETS = (
-    *[f"fedora-{ver}" for ver in FEDORA_MAJOR_VERSIONS],
-    *[f"{dist}-{ver}" for dist in ("epel", "rhel") for ver in RHEL_MAJOR_VERSIONS],
-)
-CHROOTS = [f"{target}-{arch}" for target in TARGETS for arch in ARCH]
-
-
 TERMINAL_STATES = {"succeeded", "failed", "canceled", "forked"}
 
 STATE_STYLES = {
@@ -56,6 +42,24 @@ STATE_STYLES = {
     "pending": "[dim yellow]pending[/]",
     "waiting": "[dim]waiting[/]",
 }
+
+
+@dataclasses.dataclass(frozen=True)
+class Targeter:
+    """Build chroots based on versions and architectures."""
+
+    fedora_versions: t.Iterable[str] = ("43", "44", "rawhide")
+    rhel_versions: t.Iterable[str] = ("9", "10")
+    architectures: t.Iterable[str] = ("x86_64", "aarch64", "s390x", "ppc64le", "s390x")
+    chroots: t.Iterable[str] = dataclasses.field(init=False)
+
+    def __post_init__(self):
+        targets = [
+            *[f"fedora-{ver}" for ver in self.fedora_versions],
+            *[f"{dist}-{ver}" for dist in ("epel", "rhel") for ver in self.rhel_versions],
+        ]
+        chroots = [f"{target}-{arch}" for target in targets for arch in self.architectures]
+        super().__setattr__("chroots", chroots)
 
 
 def create_client(config_file: Path | None = None) -> Client:

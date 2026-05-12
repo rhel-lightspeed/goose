@@ -228,10 +228,10 @@ def main() -> None:
     ]
 
     if args.no_monitor:
-        print(f"\nBuild #{result.id} submitted. Use --no-monitor to skip waiting.")
+        print(f"\nBuild #{result.id} submitted.")
         return
 
-    print(f"\nMonitoring build #{result.id} ...\n")
+    print(f"\nMonitoring build #{result.id}...  Use --no-monitor to skip waiting.\n")
     if not monitor_builds(client, submitted, args.poll_interval):
         sys.exit("\nBuild did not succeed.")
 

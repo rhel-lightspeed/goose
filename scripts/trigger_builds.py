@@ -137,6 +137,24 @@ def monitor_builds(client: Client, builds: list[dict], poll_interval: float) -> 
     return all(b["state"] == "succeeded" for b in builds)
 
 
+def positive_number(value: str | int | float) -> int | float:
+    message = f"Value must be a positive int or float: {value}"
+    try:
+        value = int(value)
+    except ValueError:
+        try:
+            value = float(value)
+        except ValueError:
+            raise argparse.ArgumentTypeError(message)
+    except TypeError:
+        raise argparse.ArgumentTypeError(message)
+
+    if value <= 0:
+        raise argparse.ArgumentTypeError(f"Value must be positive: {value}")
+
+    return value
+
+
 def parse_args() -> argparse.Namespace:
     targeter = Targeter()
     parser = argparse.ArgumentParser(
@@ -156,7 +174,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--poll-interval",
         "-S",
-        type=float,
+        type=positive_number,
         default=30.0,
         metavar="S",
         help="Seconds between status polls (default: 30).",
@@ -164,7 +182,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--timeout",
         "-t",
-        type=int,
+        type=positive_number,
         default=36000,
         metavar="S",
         help="Build timeout in seconds (default: 36000).",

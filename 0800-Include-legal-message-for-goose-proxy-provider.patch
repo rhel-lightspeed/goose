@@ -1,4 +1,4 @@
-From 1638c9b9d196d616169e1301fccf529120a17afd Mon Sep 17 00:00:00 2001
+From 84d0aff05ba57a67171ec322de10049a623d72ae Mon Sep 17 00:00:00 2001
 From: Rodolfo Olivieri <rolivier@redhat.com>
 Date: Fri, 24 Apr 2026 10:17:55 -0300
 Subject: [PATCH 6/6] Include legal message for goose proxy provider
@@ -11,13 +11,28 @@ AI-generated content.
 The disclaimer logic lives in a dedicated legal module so both
 interactive sessions and headless term runs can use it.
 ---
+ crates/goose-cli/src/cli.rs           |  2 ++
  crates/goose-cli/src/commands/term.rs |  3 +++
  crates/goose-cli/src/legal.rs         | 32 +++++++++++++++++++++++++++
  crates/goose-cli/src/lib.rs           |  1 +
  crates/goose-cli/src/session/mod.rs   |  2 ++
- 4 files changed, 38 insertions(+)
+ 5 files changed, 40 insertions(+)
  create mode 100644 crates/goose-cli/src/legal.rs
 
+diff --git a/crates/goose-cli/src/cli.rs b/crates/goose-cli/src/cli.rs
+index babe728c6..96081c0d3 100644
+--- a/crates/goose-cli/src/cli.rs
++++ b/crates/goose-cli/src/cli.rs
+@@ -1397,7 +1397,9 @@ async fn handle_run_command(
+             "Headless session started"
+         );
+ 
++        crate::legal::display_disclaimer();
+         let result = session.headless(contents).await;
++        crate::legal::display_always_disclaimer();
+         log_session_completion(&session, session_start, session_type, result.is_ok()).await;
+         result
+     } else {
 diff --git a/crates/goose-cli/src/commands/term.rs b/crates/goose-cli/src/commands/term.rs
 index 22fade45a..184153565 100644
 --- a/crates/goose-cli/src/commands/term.rs
@@ -110,5 +125,5 @@ index 26447c5d7..d4f033a88 100644
              RunMode::Plan => {
                  let mut plan_messages = self.messages.clone();
 -- 
-2.53.0
+2.54.0
 

@@ -35,6 +35,8 @@ Extract the new source and test each patch:
 tar xf goose-{TARGET_VERSION}.tar.gz
 cd goose-{TARGET_VERSION}
 for p in ../0*.patch; do
+  # Skip vendor (01xx) and RHEL-only (08xx) patches — tested in steps 3.5/3.6
+  case "$(basename "$p")" in 01[0-9][0-9]-*|08[0-9][0-9]-*) continue;; esac
   echo "=== Testing: $p"
   patch -p1 --dry-run < "$p" && echo "OK" || echo "FAILED"
 done

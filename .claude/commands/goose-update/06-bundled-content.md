@@ -60,7 +60,7 @@ new crates may also embed JS/CSS assets.
 1. Find all `.js` and `.css` files across all crates (excluding test folders):
 
 ```bash
-find goose-{TARGET_VERSION}/crates/ \( -name '*.min.js' -o -name '*.min.css' -o -name '*.js' -o -name '*.css' \) \
+find crates/ \( -name '*.min.js' -o -name '*.min.css' -o -name '*.js' -o -name '*.css' \) \
   -not -path '*/target/*' -not -path '*/test*/*' | sort
 ```
 
@@ -68,7 +68,7 @@ find goose-{TARGET_VERSION}/crates/ \( -name '*.min.js' -o -name '*.min.css' -o 
    by inspecting the file header or first few lines:
 
 ```bash
-find goose-{TARGET_VERSION}/crates/ \( -name '*.min.js' -o -name '*.min.css' \) \
+find crates/ \( -name '*.min.js' -o -name '*.min.css' \) \
   -not -path '*/target/*' -not -path '*/test*/*' \
   -exec sh -c 'echo "=== {} ==="; head -5 "{}"; echo' \;
 ```
@@ -93,7 +93,7 @@ Check for any other embedded binary data or assets that may constitute bundled
 content:
 
 ```bash
-rg -n 'include_bytes!|include_str!|include_dir!' goose-{TARGET_VERSION}/crates/ \
+rg -n 'include_bytes!|include_str!|include_dir!' crates/ \
   -t rust --glob '!target/' | rg -v '\.md"' | rg -v '/prompts/'
 ```
 

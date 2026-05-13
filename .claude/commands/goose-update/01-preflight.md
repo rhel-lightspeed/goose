@@ -23,7 +23,7 @@ it locally (the file is too large for WebFetch):
 
 ```bash
 curl -sL https://raw.githubusercontent.com/aaif-goose/goose/v{TARGET_VERSION}/Cargo.lock -o /tmp/goose-upstream-Cargo.lock
-rg -c '^name = "(v8|v8-sys|deno-core|deno_|swc|swc_|wasm-bindgen)"' /tmp/goose-upstream-Cargo.lock
+rg -c '^name = "(v8|v8-sys|deno-core|deno[-_]|swc[-_]?|wasm-bindgen)"' /tmp/goose-upstream-Cargo.lock
 ```
 
 If any matches are found, **STOP** and warn the user:

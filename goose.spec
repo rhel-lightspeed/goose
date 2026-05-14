@@ -83,6 +83,11 @@ Patch4:         0004-Fix-sql-statement-from-session-manager.patch
 # Backport of https://github.com/aaif-goose/goose/pull/8118
 # Sets permissions of newly created secrets.yaml file to 0600.
 Patch5:         0005-Better-default-permissions-for-secrets.patch
+# Update a transitive dependency for openssl to fix CVEs:
+#   * CVE-2026-41676, CVE-2026-41677, CVE-2026-41678, 
+#   * CVE-2026-41681, CVE-2026-41898, CVE-2026-42327, 
+#   * CVE-2026-44662
+Patch6:         0006-Update-openssl-transitive-dependency.patch
 
 ## Downstream only patches
 #

@@ -2,7 +2,12 @@
 set -euo pipefail
 
 # List of patches to be applied in the vendored folder
-PATCHES=("0000-Patch-windows-dependencies-across-workspace.patch" "0001-Disable-rustls-and-default-features-for-some-librari.patch" "0003-Fix-for-CVE-2026-33056-on-tar.patch")
+PATCHES=(
+    "0000-Patch-windows-dependencies-across-workspace.patch" 
+    "0001-Disable-rustls-and-default-features-for-some-librari.patch" 
+    "0003-Fix-for-CVE-2026-33056-on-tar.patch" 
+    "0006-Update-openssl-transitive-dependency.patch"
+)
 
 check_required_tools() {
     local tools=("cargo" "rpmspec" "spectool" "tar" "patch")
@@ -43,7 +48,7 @@ rm -rf "$GOOSE_SOURCE" && tar xf "$GOOSE_SOURCE_TARBALL" >/dev/null 2>&1
 echo "[+] Applying patches..."
 pushd "$GOOSE_SOURCE" >/dev/null
 for patch in "${PATCHES[@]}"; do
-    patch -p1 <"../$patch" >/dev/null 2>&1
+    patch -p1 <"../$patch" 
     echo "[!] Applied patch $patch"
 done
 

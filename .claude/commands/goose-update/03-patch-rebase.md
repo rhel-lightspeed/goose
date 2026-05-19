@@ -18,7 +18,7 @@ Requires: Phase 2 completed (new source tarball downloaded).
   from 0001 so Cargo.toml patches can be regenerated independently)
 - `0003+` — CVE fixes, downstream-only fixes
 
-**0100-0199 patches** — Target vendored crates (paths start with `vendor/`,
+**0100-0799 patches** — Target vendored crates (paths start with `vendor/`,
 applied from the source root via `%autopatch -p1 -M 799`):
 - `0100` — Patch ring's build.rs to never use pre-generated object files
 - `0101` — Raise recursion limit for packaging

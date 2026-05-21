@@ -1,11 +1,22 @@
-[![Copr build status](https://copr.fedorainfracloud.org/coprs/r0x0d/goose/package/goose/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/r0x0d/goose/package/goose/)
+[![Copr build status](https://copr.fedorainfracloud.org/coprs/g/rhel-lightspeed/goose/package/goose/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/g/rhel-lightspeed/goose/package/goose/)
 
 # goose
 
-* [COPR repo](https://copr.fedorainfracloud.org/coprs/r0x0d/goose)
-* [Upstream repo](https://github.com/block/goose)
-* [Upstream license](https://github.com/block/goose/blob/main/LICENSE)
-* [Fedora Package Review Bugzilla](TODO)
+This is the development repository for the Fedora/RHEL RPM packaging of
+[goose](https://github.com/block/goose). It is the upstream source for the
+dist-git version of the package. Changes are developed and tested here before
+being submitted to dist-git.
+
+* [COPR repo](https://copr.fedorainfracloud.org/coprs/g/rhel-lightspeed/goose)
+* [Upstream repo](https://github.com/aaif-goose/goose)
+* [Upstream license](https://github.com/aaif-goose/goose/blob/main/LICENSE)
+* [Fedora Package Review Bugzilla](https://bugzilla.redhat.com/show_bug.cgi?id=2428704)
+
+## Documentation
+
+- [Makefile Reference](docs/makefile.md) -- build targets and typical workflow
+- [Version Update Process](docs/update-process.md) -- how to update to a new
+  upstream version
 
 ## Setup
 
@@ -29,30 +40,7 @@ To build this RPM via copr, the following commands are required:
 make sources
 
 # Will perform two operations:
-#   * Generate a new srpm with `fedpkg srpm`
+#   * Generate a new srpm with `fedpkg --release rawhide srpm`
 #   * Request a new build on copr
 make build
-```
-
-## Push to Github (optional)
-
-This step is optional, but it will secure that the specfile and other settings
-are persisted somewhere.
-
-```bash
-# Create a new repository in your account using `gh` and some pre-defined
-# settings.
-make create-gh-repo
-```
-
-## Generate patches for downstream
-
-```bash
-git clone git@github.com:block/goose goose-source
-cd goose-source
-git checkout $TAG
-# ... modify the source ...
-git add -u && git commit
-# ... write your commit message ...
-git format-patch -<number of commits to generate patch>
 ```

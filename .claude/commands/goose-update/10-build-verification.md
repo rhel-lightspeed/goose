@@ -9,7 +9,7 @@ Requires: All previous phases completed, spec file fully updated.
 ## 10.1 Local SRPM Build
 
 ```bash
-fedpkg srpm
+fedpkg --release rawhide srpm
 ```
 
 Verify the SRPM builds without errors. This is a basic sanity check — it

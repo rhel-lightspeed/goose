@@ -71,6 +71,7 @@ skip a compliance check. Always show the user what changed before proceeding.
 | 8 | `goose-update/08-spec-updates.md` | Binary targets, BuildRequires, test skips, %prep, Source/Patch |
 | 9 | `goose-update/09-compliance-checklist.md` | Full BZ#2428704 compliance pass/fail checklist |
 | 10 | `goose-update/10-build-verification.md` | SRPM build, changelog, next steps |
+| 11 | `goose-update/11-changelog-update.md` | Update changelog with upstream release notes |
 
 Read each phase file with the Read tool as you reach it. Do not read all files
 upfront — process them one at a time to keep context focused.

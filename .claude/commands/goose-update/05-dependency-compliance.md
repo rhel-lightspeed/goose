@@ -95,6 +95,7 @@ dnf provides 'pkgconfig({LIBRARY_NAME})'
 dnf search {LIBRARY_NAME}-devel
 ```
 
+
 3. **If a system package exists:**
    - Add a `prune_vendor` call in `%prep` to strip the bundled C source
      directory, following the existing pattern:
@@ -114,6 +115,53 @@ dnf search {LIBRARY_NAME}-devel
 4. **If no system package exists**, the crate may need to build its own copy —
    flag it for the user to evaluate whether it contains prebuilt objects that
    violate Fedora guidelines (see 5.3).
+
+### 5.2.3 Verify feature injection is not bypassed by default-features = false
+
+The `%prep` section injects features (e.g. `pkg-config`) into the `default`
+feature list of certain vendored crates so they link against system libraries.
+If an intermediate crate depends on the target with `default-features = false`,
+those injected defaults are silently ignored and the build will try to compile
+from bundled C sources (which were pruned).
+
+For every crate in the table in 5.2 where `%prep` injects features into the
+`default = [...]` array (currently `zstd-sys`), check whether any crate in the
+vendor tree pulls it in with `default-features = false`:
+
+```bash
+for crate in zstd-sys; do
+  # Normalize crate name for TOML section matching (zstd-sys -> zstd-sys)
+  toml_name="${crate}"
+  grep -rl "\[dependencies\.${toml_name}\]" vendor/*/Cargo.toml 2>/dev/null | while read f; do
+    # Extract the dependency section and check for default-features = false
+    if sed -n "/\[dependencies\.${toml_name}\]/,/^\[/p" "$f" | grep -q 'default-features = false'; then
+      echo "WARNING: $f disables default-features for ${crate}"
+      # Show what features it does request
+      sed -n "/\[dependencies\.${toml_name}\]/,/^\[/p" "$f" | grep -E '(features|default-features)'
+    fi
+  done
+done
+```
+
+For each WARNING found:
+
+1. Check whether the injected feature (e.g. `pkg-config`) is already explicitly
+   listed in the dependency's `features = [...]` line.
+2. If NOT, the `%prep` section must add a `sed` command to inject the feature
+   into that dependency's `[dependencies.{CRATE}]` section. For example, for
+   `zstd-safe` depending on `zstd-sys` with `default-features = false`:
+
+   ```bash
+   sed -i '/\[dependencies\.zstd-sys\]/,/^$/{
+       /default-features = false/a\features = ["pkg-config"]
+   }' zstd-safe-*/Cargo.toml
+   ```
+
+3. Ensure the `.cargo-checksum.json` for the patched crate is also cleared
+   (the existing `find` command for `zstd-*` already covers this).
+
+This check must be repeated on every version update because upstream dependency
+trees change and new crates may appear with `default-features = false`.
 
 ## 5.3 Prebuilt Object/Binary Scan
 

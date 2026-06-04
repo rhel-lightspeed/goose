@@ -77,6 +77,8 @@ Check if these workarounds in `%prep` are still needed:
 
 2. **zstd pkg-config feature injection**: Check if upstream zstd-sys crate now
    includes `pkg-config` in default features. If so, remove the sed workaround.
+   Also verify that no dependency in the chain disables defaults — see Phase
+   5.2.3 for the full check.
 
 3. **Cargo checksum clearing**: Any `prune_vendor` or sed workaround that
    modifies vendored crate files must also patch `.cargo-checksum.json`.

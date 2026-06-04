@@ -26,7 +26,7 @@ index babe728c6..96081c0d3 100644
 @@ -1397,7 +1397,9 @@ async fn handle_run_command(
              "Headless session started"
          );
- 
+
 +        crate::legal::display_disclaimer();
          let result = session.headless(contents).await;
 +        crate::legal::display_always_disclaimer();
@@ -34,18 +34,18 @@ index babe728c6..96081c0d3 100644
          result
      } else {
 diff --git a/crates/goose-cli/src/commands/term.rs b/crates/goose-cli/src/commands/term.rs
-index 22fade45a..184153565 100644
+index dd539d5..f65b3fd 100644
 --- a/crates/goose-cli/src/commands/term.rs
 +++ b/crates/goose-cli/src/commands/term.rs
-@@ -5,6 +5,7 @@ use goose::session::{SessionManager, SessionType};
+@@ -5,6 +5,7 @@ use goose::conversation::message::{Message, MessageContent, MessageMetadata};
+ use goose::session::{SessionManager, SessionType};
  use rmcp::model::Role;
  
- use crate::session::{build_session, SessionBuilderConfig};
 +use crate::legal;
+ use crate::session::{build_session, SessionBuilderConfig};
  
  use clap::ValueEnum;
- 
-@@ -258,7 +259,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
+@@ -260,7 +261,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
      };
  
      let mut session = build_session(config).await;
@@ -57,7 +57,7 @@ index 22fade45a..184153565 100644
  }
 diff --git a/crates/goose-cli/src/legal.rs b/crates/goose-cli/src/legal.rs
 new file mode 100644
-index 000000000..4f63937c8
+index 0000000..4f63937
 --- /dev/null
 +++ b/crates/goose-cli/src/legal.rs
 @@ -0,0 +1,32 @@
@@ -94,10 +94,11 @@ index 000000000..4f63937c8
 +    }
 +}
 diff --git a/crates/goose-cli/src/lib.rs b/crates/goose-cli/src/lib.rs
-index 3996e0796..32b14e706 100644
+index be821a2..48610c7 100644
 --- a/crates/goose-cli/src/lib.rs
 +++ b/crates/goose-cli/src/lib.rs
-@@ -1,5 +1,6 @@
+@@ -6,6 +6,7 @@ compile_error!("Features `rustls-tls` and `native-tls` are mutually exclusive");
+ 
  pub mod cli;
  pub mod commands;
 +pub mod legal;
@@ -105,25 +106,25 @@ index 3996e0796..32b14e706 100644
  pub mod project_tracker;
  pub mod recipes;
 diff --git a/crates/goose-cli/src/session/mod.rs b/crates/goose-cli/src/session/mod.rs
-index 26447c5d7..d4f033a88 100644
+index 4deb36a..62f0a2f 100644
 --- a/crates/goose-cli/src/session/mod.rs
 +++ b/crates/goose-cli/src/session/mod.rs
-@@ -441,6 +441,7 @@ impl CliSession {
+@@ -512,6 +512,7 @@ impl CliSession {
+         let history_manager = HistoryManager::new();
          history_manager.load(&mut editor);
  
-         output::display_greeting();
 +        crate::legal::display_disclaimer();
          loop {
              self.display_context_usage().await?;
  
-@@ -605,6 +606,7 @@ impl CliSession {
-                     "\n{}",
-                     console::style(format!("⏱️  Elapsed time: {}", elapsed_str)).dim()
-                 );
-+                crate::legal::display_always_disclaimer()
+@@ -712,6 +713,7 @@ impl CliSession {
+                 let elapsed = start_time.elapsed();
+                 let elapsed_str = format_elapsed_time(elapsed);
+                 println!("{}", console::style(format!("  ⏱ {}", elapsed_str)).dim());
++                crate::legal::display_always_disclaimer();
              }
              RunMode::Plan => {
                  let mut plan_messages = self.messages.clone();
--- 
+--
 2.54.0
 

@@ -1,5 +1,5 @@
---- a/vendor/ring-0.17.9/build.rs
-+++ b/vendor/ring-0.17.9/build.rs
+--- a/vendor/ring-0.17.14/build.rs
++++ b/vendor/ring-0.17.14/build.rs
 @@ -121,8 +121,6 @@
  
  const RING_TEST_SRCS: &[&str] = &[("crypto/constant_time_test.c")];

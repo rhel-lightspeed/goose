@@ -3,8 +3,8 @@
 *.crate
 *.src.rpm
 *.tar.gz
-goose-*
 !.claude/commands/goose-update/
+vendor
 
 # Dev
 .python-version

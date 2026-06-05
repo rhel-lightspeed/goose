@@ -42,12 +42,20 @@ if [ ! -f "$GOOSE_SOURCE_TARBALL" ]; then
 fi
 
 echo "[+] Tarball found, extracting..."
-rm -rf "$GOOSE_SOURCE" && tar xf "$GOOSE_SOURCE_TARBALL" >/dev/null 2>&1
+rm -rf "$GOOSE_SOURCE"
+tar -xzf "$GOOSE_SOURCE_TARBALL" \
+    --exclude "goose-${VERSION}/.claude" \
+    --exclude "goose-${VERSION}/.codex" \
+    --exclude "goose-${VERSION}/.cursor" \
+    --exclude "goose-${VERSION}/evals" \
+    --exclude "goose-${VERSION}/services" \
+    --exclude "goose-${VERSION}/oidc-proxy" \
+    --exclude "goose-${VERSION}/vendor/v8"
 
 echo "[+] Applying patches..."
 pushd "$GOOSE_SOURCE" >/dev/null
 for patch in "${PATCHES[@]}"; do
-    patch -p1 <"../$patch" 
+    patch -p1 <"../$patch"
     echo "[!] Applied patch $patch"
 done
 

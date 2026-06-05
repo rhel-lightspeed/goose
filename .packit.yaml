@@ -99,9 +99,10 @@ jobs:
   - job: tests
     trigger: pull_request
     fmf_url: "https://gitlab.cee.redhat.com/rhel-lightspeed/enhanced-shell/goose-tests"
-    fmf_ref: "main"
+    fmf_ref: "develop"
     use_internal_tf: True
     identifier: goose-tests
+    tmt_plan: "level0"
     env:
       GOOSE_TESTS_GOOSE_REDHAT_PACKAGE_SOURCE_PROFILE: "copr"
     targets:

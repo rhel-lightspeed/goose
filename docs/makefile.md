@@ -38,14 +38,38 @@ files are placed in the repository root directory.
 make sources
 ```
 
+### `vendor-tarball`
+
+Generates the vendored crate tarball using `generate-vendor-tarball.sh`. This
+is a prerequisite of the `srpm` target and is skipped if the tarball already
+exists.
+
+```bash
+make vendor-tarball
+```
+
 ### `srpm`
 
 Generates a source RPM (`.src.rpm`) using `fedpkg` targeting the Rawhide
-release. This is automatically called by the `build` target, but can be run
-independently to verify that the spec file produces a valid SRPM.
+release. Depends on `vendor-tarball` to ensure the vendored crate tarball
+exists first. This is automatically called by the `build` target, but can be
+run independently to verify that the spec file produces a valid SRPM.
 
 ```bash
 make srpm
+```
+
+### `import`
+
+Imports the SRPM into the dist-git checkout directory. Depends on `srpm` to
+ensure the SRPM exists. Runs `fedpkg import` inside the directory specified
+by the `DIST_GIT_CHECKOUT` variable (defaults to `../goose-fedora`).
+
+```bash
+make import
+
+# Or with a custom dist-git checkout path
+make import DIST_GIT_CHECKOUT=/path/to/dist-git
 ```
 
 ### `build`
@@ -56,6 +80,16 @@ Builds the package in COPR. This target first generates an SRPM (via the
 
 ```bash
 make build
+```
+
+### `build-all`
+
+Builds the package in COPR across all supported chroots: Fedora 43, 44, and
+Rawhide (x86_64, aarch64, ppc64le, s390x), EPEL 9 and 10, and RHEL 9 and 10.
+Uses a 10-hour timeout.
+
+```bash
+make build-all
 ```
 
 ### `logs`
@@ -77,6 +111,7 @@ Removes generated build artifacts from the repository root:
 - `*.tar.gz`, `*.tar.xz` -- source tarballs
 - `*.crate` -- Rust crate archives
 - `vendor/` -- vendored dependencies directory
+- `goose-*` -- extracted source and vendor directories
 
 ```bash
 make clean
@@ -91,6 +126,15 @@ under `requirements/`.
 ```bash
 make freeze
 ```
+
+## Variables
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `DIST_GIT_CHECKOUT` | `../goose-fedora` | Path to the dist-git checkout used by `make import`. Override with `make import DIST_GIT_CHECKOUT=/path/to/checkout`. |
+| `SRPM` | Auto-detected | Resolves to the absolute path of the most recent `.src.rpm` in the repo root, or `MISSING` if none exists. |
+| `VERSION` | From spec | Extracted from `goose.spec` using `rpmspec`. |
+| `VENDOR_TARBALL` | `goose-$(VERSION)-vendor.tar.xz` | Name of the vendored crate tarball. |
 
 ## Typical Workflow
 

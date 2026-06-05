@@ -2,6 +2,10 @@ NAME := goose
 PKG_NAME := $(NAME)
 TOOL2RPM := rust2rpm
 FAS_USERNAME := $(shell copr whoami)
+DIST_GIT_CHECKOUT ?= ../goose-fedora
+VERSION := $(shell rpmspec -q --qf "%{VERSION}" goose.spec)
+VENDOR_TARBALL := goose-$(VERSION)-vendor.tar.xz
+SRPM = $(shell srpm=$$(ls goose-$(VERSION)*.src.rpm 2>/dev/null | tail -n 1); if [ -f "$$srpm" ]; then echo $$(realpath "$$srpm"); else echo MISSING; fi)
 
 .PHONY: create-copr-repo
 create-copr-repo:
@@ -13,9 +17,23 @@ create-copr-repo:
 sources:
 	spectool -g $(NAME).spec
 
-.PHONY: srpm
-srpm:
+# Dynamic targets that will not run if the file exists.
+$(VENDOR_TARBALL):
+	./generate-vendor-tarball.sh
+
+$(SRPM):
 	fedpkg --release rawhide srpm
+
+# Static targets that provide a consistent interface.
+.PHONY: vendor-tarball
+vendor-tarball: $(VENDOR_TARBALL)
+
+.PHONY: srpm
+srpm: vendor-tarball $(SRPM)
+
+.PHONY: import
+import: srpm
+	@(cd $(DIST_GIT_CHECKOUT) && fedpkg import $(SRPM))
 
 .PHONY: build
 build: srpm
@@ -63,7 +81,7 @@ logs:
 
 .PHONY: clean
 clean:
-	rm -rf *.src.rpm *.tar.gz *.tar.xz *.crate vendor
+	rm -rf *.src.rpm *.tar.gz *.tar.xz *.crate vendor goose-*
 
 .PHONY: freeze
 freeze:

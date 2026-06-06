@@ -25,10 +25,6 @@ Before executing a new build, run the initial setup first:
 ```bash
 # Create a new copr repository
 make create-copr-repo
-
-# Will create a specfile based on project settings.
-# This is only needed in case the goose.spec is missing.
-make spec
 ```
 
 ## Building

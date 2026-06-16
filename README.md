@@ -1,6 +1,6 @@
 [![Copr build status](https://copr.fedorainfracloud.org/coprs/g/rhel-lightspeed/goose/package/goose/status_image/last_build.png)](https://copr.fedorainfracloud.org/coprs/g/rhel-lightspeed/goose/package/goose/)
 
-# goose
+# Goose
 
 This is the development repository for the Fedora/RHEL RPM packaging of
 [goose](https://github.com/block/goose). It is the upstream source for the

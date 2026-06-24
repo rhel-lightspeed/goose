@@ -27,7 +27,7 @@
 %global rustflags_codegen_units 16
 
 Name:           goose
-Version:        1.36.0
+Version:        1.38.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/block/goose
@@ -43,13 +43,8 @@ Source1:        %{name}-%{version}-vendor.tar.xz
 # doing so.
 Source99:       generate-vendor-tarball.sh
 
-## Dependency patches (0000-0002)
+## Dependency patches (0001-0002)
 #
-# Add a `tui` feature flag to gate the TUI command behind a Cargo feature.
-# This patch can be dropped once it is merged upstream and goose released a new
-# version.
-#   * https://github.com/aaif-goose/goose/pull/9428
-Patch:          0000-Add-tui-feature-flag-for-tui-command.patch
 # Strip non-Linux platform deps (Windows winapi/winreg, macOS metal/apple-native
 # keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
 # entries (v8, cudaforge). Remove keyring 'vendored' feature (use system dbus).
@@ -131,8 +126,8 @@ Conflicts: golang-github-pressly-goose
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
 #
 #   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.36.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.36.0/crates/goose-cli/src/scenario_tests/recordings
+#   	- https://github.com/block/goose/tree/v1.38.0/crates/goose-mcp/src/computercontroller/tests/data
+#   	- https://github.com/block/goose/tree/v1.38.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the
@@ -144,6 +139,7 @@ Conflicts: golang-github-pressly-goose
 # 0BSD OR MIT OR Apache-2.0
 # Apache-2.0
 # Apache-2.0 OR BSL-1.0
+# Apache-2.0 OR BSL-1.0 OR MIT
 # Apache-2.0 OR MIT
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 # BSD-2-Clause
@@ -182,6 +178,7 @@ License:        %{shrink:
                 AND (Apache-2.0 OR BSD-2-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-3-Clause)
                 AND (Apache-2.0 OR BSL-1.0)
+                AND (Apache-2.0 OR BSL-1.0 OR MIT)
                 AND (Apache-2.0 OR CC0-1.0 OR MIT-0)
                 AND (Apache-2.0 OR ISC)
                 AND (Apache-2.0 OR ISC OR MIT)

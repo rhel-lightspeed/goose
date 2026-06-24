@@ -3,7 +3,6 @@ set -euo pipefail
 
 # List of patches to be applied in the vendored folder
 PATCHES=(
-    "0000-Add-tui-feature-flag-for-tui-command.patch"
     "0001-Strip-non-Linux-deps-and-use-system-libraries.patch"
     "0002-Set-downstream-feature-flags.patch"
 )

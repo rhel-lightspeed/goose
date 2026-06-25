@@ -43,7 +43,7 @@ Source1:        %{name}-%{version}-vendor.tar.xz
 # doing so.
 Source99:       generate-vendor-tarball.sh
 
-## Dependency patches (0001-0002)
+## Dependency patches (0001-0002, 0005)
 #
 # Strip non-Linux platform deps (Windows winapi/winreg, macOS metal/apple-native
 # keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
@@ -54,6 +54,12 @@ Patch1:         0001-Strip-non-Linux-deps-and-use-system-libraries.patch
 # Switch sqlx from bundled 'sqlite' to 'sqlite-unbundled' to link against system
 # sqlite.
 Patch2:         0002-Set-downstream-feature-flags.patch
+# Downgrade pkcs8 from 0.11.0 to 0.10.2 so that pkcs1 (0.7.5), pkcs8, and sec1
+# (0.7) all resolve against the same spki/der/const-oid generation. Upstream
+# defaults to rustls-tls and never activates these optional deps together;
+# native-tls activates all three, exposing a type mismatch between spki 0.7 and
+# 0.8.
+Patch5:         0005-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch
 
 ## Code patches (0003-0099)
 #

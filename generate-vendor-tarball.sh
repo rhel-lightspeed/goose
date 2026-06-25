@@ -5,6 +5,7 @@ set -euo pipefail
 PATCHES=(
     "0001-Strip-non-Linux-deps-and-use-system-libraries.patch"
     "0002-Set-downstream-feature-flags.patch"
+    "0005-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch"
 )
 
 check_required_tools() {

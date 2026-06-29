@@ -43,7 +43,7 @@ Source1:        %{name}-%{version}-vendor.tar.xz
 # doing so.
 Source99:       generate-vendor-tarball.sh
 
-## Dependency patches (0001-0002, 0005)
+## Dependency patches (1-19)
 #
 # Strip non-Linux platform deps (Windows winapi/winreg, macOS metal/apple-native
 # keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
@@ -59,19 +59,19 @@ Patch2:         0002-Set-downstream-feature-flags.patch
 # defaults to rustls-tls and never activates these optional deps together;
 # native-tls activates all three, exposing a type mismatch between spki 0.7 and
 # 0.8.
-Patch5:         0005-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch
+Patch3:         0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch
 
-## Code patches (0003-0099)
+## Code patches (20-99)
 #
 # Avoid the 'RETURNING' SQL statement which requires SQLite 3.35.0. EPEL 9 is
 # stuck on 3.34.1, so we split the INSERT + SELECT into two statements.
-Patch3:         0003-Fix-sql-statement-from-session-manager.patch
+Patch20:         0020-Fix-sql-statement-from-session-manager.patch
 # Since we are disabling codemode feature, we need to update the snapshot of a
 # test so it passes when running `cargo test`. That's better than skipping the
 # test entirely.
-Patch4:         0004-Update-snapshot-test-without-codemode-instructions.patch
+Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
 
-## Downstream only patches
+## Downstream only patches (100-799)
 #
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
 # files that comes with the vendored crate, and instead, build from system
@@ -83,7 +83,7 @@ Patch4:         0004-Update-snapshot-test-without-codemode-instructions.patch
 # on the version bump from ring, otherwise, we should
 Patch0100:      0100-Downstream-only-never-use-pre-generated-object-files.patch
 
-## RHEL only patches
+## RHEL only patches (800-899)
 # Patches in the 800-899 range are applied only to RHEL.
 #
 # Add disclaimer as required by legal only on RHEL

@@ -60,6 +60,9 @@ Patch2:         0002-Set-downstream-feature-flags.patch
 # native-tls activates all three, exposing a type mismatch between spki 0.7 and
 # 0.8.
 Patch3:         0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch
+# aws-lc-rs on rcgen is enabled, which pulls in aws-lc-rs even when rust-tls is
+# disabled. Put it in the feature list with rust-tls so it is properly disabled.
+Patch4:         0004-aws-lc-rs-feature-flag.patch
 
 ## Code patches (20-99)
 #

@@ -25,6 +25,13 @@
 %constrain_build -m 6144
 
 %global rustflags_codegen_units 16
+# WORKAROUND: Mitigate flaky ICE in Rust 1.92 on s390x in COPR environment
+# by reducing concurrent LLVM threads and memory footprint during code generation.
+%ifarch s390x
+  %if 0%{?copr_projectname:1}
+    %global build_rustflags -Copt-level=3 -Cdebuginfo=0 -Ccodegen-units=1 -Cstrip=none --cap-lints=warn
+  %endif
+%endif
 
 Name:           goose
 Version:        1.36.0

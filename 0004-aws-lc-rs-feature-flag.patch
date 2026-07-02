@@ -1,0 +1,51 @@
+diff --git a/Cargo.lock b/Cargo.lock
+index bb1d3e7108..6f7d4c59ea 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -8156,6 +8156,7 @@ checksum = "57f6d249aad744e274e682777a50283a225a32705394ee6d5fcc01efa25e4055"
+ dependencies = [
+  "aws-lc-rs",
+  "pem",
++ "ring",
+  "rustls-pki-types",
+  "time",
+  "x509-parser",
+@@ -12938,6 +12939,7 @@ dependencies = [
+  "lazy_static",
+  "nom 7.1.3",
+  "oid-registry",
++ "ring",
+  "rusticata-macros",
+  "thiserror 2.0.18",
+  "time",
+diff --git a/crates/goose-server/Cargo.toml b/crates/goose-server/Cargo.toml
+index add298a07d..3de662a50e 100644
+--- a/crates/goose-server/Cargo.toml
++++ b/crates/goose-server/Cargo.toml
+@@ -38,6 +38,7 @@ rustls-tls = [
+     "axum-server/tls-rustls",
+     "dep:rustls",
+     "dep:aws-lc-rs",
++    "rcgen/aws_lc_rs",
+     "goose/rustls-tls",
+     "goose-mcp/rustls-tls",
+ ]
+@@ -45,6 +46,9 @@ native-tls = [
+     "reqwest/native-tls",
+     "tokio-tungstenite/native-tls",
+     "axum-server/tls-openssl",
++    # rcgen requires a crypto backend; ring is used here because aws-lc-rs is
++    # reserved for the rustls-tls path and openssl does not provide this interface.
++    "rcgen/ring",
+     "dep:openssl",
+     "goose/native-tls",
+     "goose-mcp/native-tls",
+@@ -85,7 +89,7 @@ socket2 = { version = "0.6", default-features = false }
+ fs2 = { workspace = true }
+ rustls = { workspace = true, optional = true }
+ uuid = { workspace = true }
+-rcgen = { version = "0.14", default-features = false, features = ["aws_lc_rs", "crypto", "pem"] }
++rcgen = { version = "0.14", default-features = false, features = ["crypto", "pem"] }
+ axum-server = { version = "0.8", default-features = false }
+ aws-lc-rs = { version = "1.17", default-features = false, optional = true }
+ openssl = { version = "0.10.66", default-features = false, optional = true }

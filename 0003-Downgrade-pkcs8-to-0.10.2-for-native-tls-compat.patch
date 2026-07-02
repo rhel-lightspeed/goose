@@ -1,0 +1,25 @@
+From 73f80f1b0bcac2bf94db0126f3115ad8b8e8c2b9 Mon Sep 17 00:00:00 2001
+From: Sam Doran <github@samdoran.com>
+Date: Wed, 24 Jun 2026 15:17:32 -0400
+Subject: [PATCH] Downgrade pkcs8 to 0.10.2 for native-tls compatibility
+
+---
+ crates/goose/Cargo.toml | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/crates/goose/Cargo.toml b/crates/goose/Cargo.toml
+index 47f172b..04da822 100644
+--- a/crates/goose/Cargo.toml
++++ b/crates/goose/Cargo.toml
+@@ -195,7 +195,7 @@ pastey = { version = "0.2", default-features = false }
+ shell-words = { workspace = true }
+ pem = { version = "3.0.2", default-features = false, features = ["std"], optional = true }
+ pkcs1 = { version = "0.7.5", default-features = false, features = ["pkcs8", "std"], optional = true }
+-pkcs8 = { version = "0.11.0", default-features = false, features = ["alloc", "std"], optional = true }
++pkcs8 = { version = "0.10.2", default-features = false, features = ["alloc", "std"], optional = true }
+ sec1 = { version = "0.7", default-features = false, features = ["der", "pkcs8", "std"], optional = true }
+ goose-acp-macros = { path = "../goose-acp-macros", default-features = false }
+ tower-http = { workspace = true, features = ["cors"] }
+-- 
+2.54.0
+

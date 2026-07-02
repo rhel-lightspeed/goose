@@ -3,9 +3,10 @@ set -euo pipefail
 
 # List of patches to be applied in the vendored folder
 PATCHES=(
-    "0000-Add-tui-feature-flag-for-tui-command.patch"
     "0001-Strip-non-Linux-deps-and-use-system-libraries.patch"
     "0002-Set-downstream-feature-flags.patch"
+    "0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch"
+    "0004-aws-lc-rs-feature-flag.patch"
 )
 
 check_required_tools() {

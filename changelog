@@ -1,3 +1,66 @@
+* Wed Jun 17 2026 Sam Doran <sdoran@redhat.com> - 1.38.0-1
+- Update to version 1.38.0
+- Canonical thinking modes across providers
+- Surface Anthropic stream refusals as visible errors
+- ACP secret key support at goose serve endpoint
+- Unified OTLP logging schema for cross-tool detection
+- Opt-in ACP last message snippets for sessions
+- Custom ACP method to get session info
+- Steering messages with ACP
+- ACP list sessions with keyword and type filter
+- ACP thinking effort config option
+- Image read tool
+- ACP methods for config extensions
+- Custom notifications only when ACP client specifies capability
+- Session import functionality
+- Replay ACP images on session load
+- Raw provider supported models over ACP
+- ACP session system prompt setter
+- Perplexity as declarative OpenAI-compatible provider
+- Alibaba (Qwen via DashScope) declarative provider
+- Configurable tool output size limit via GOOSE_MAX_TOOL_RESPONSE_SIZE
+- /model slash command in CLI for session model switching
+- Databricks AI Gateway provider
+- Expose built-in skills through sources list ACP calls
+- Replace raw config and secret methods in ACP
+- Support Google model inventory refresh
+- Correctly map ollama_cloud to canonical provider and update max tokens
+- Incorrect max tokens values for Groq provider
+- Classify Bedrock ValidationException as ExecutionError
+- Page through all Databricks AI Gateway v2 endpoints when listing models
+- Preserve unparseable extension entries during config refresh
+- Forward ACP server context window size to clients
+- Skip OTLP signals when protocol=grpc to avoid background-thread panic
+- Make Azure api-version query param optional
+- Stricter GGUF requirements, auto detection of tool calling support, fixed thinking output parsing
+- Remove unused fetch-metadata IPC handler (SSRF)
+- Replace Venice custom provider with declarative config
+- Coalesce streaming chunks under one message id in ACP
+- Require extension_name on read_resource
+- Seed provider handoff history in ACP
+- Handle ACP requests concurrently
+- Mark stream decode errors retryable
+- Create goose-providers crate with canonical models and types
+- ACP session setup refactor
+- LRU cache for token counting
+- Replace review subprocess timeout with turn limits
+- Honor blocking Stop hook decisions
+- Forward custom headers through OAuth connect path
+- Prefer goose aliases for Databricks v2 inventory
+- Mount ACP in goosed server for iterative migration
+- Remove threads layer, use sessions directly for ACP
+- Install plugins to ~/.agents/plugins
+- Switch to official new rust-sdk for ACP
+- Install plugins support
+- Deduplicate _goose/providers/list RPC call at startup
+- Translate ACP host capabilities into MCP initialization
+- Prompt injection mitigation enabled by default for internal users
+- Re-adjust pattern-based detection confidence scores
+- Add directionality to egress logging
+- Scheduled recipe session params
+- Unscheduling a recipe should not delete them
+- Read prompted file parameters in recipes
+
 * Thu May 22 2025 Rodolfo Olivieri <rolivier@redhat.com> - 1.36.0-1
 - Update to version 1.36.0
 - goose review local code review command

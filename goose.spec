@@ -27,7 +27,7 @@
 %global rustflags_codegen_units 16
 
 Name:           goose
-Version:        1.36.0
+Version:        1.38.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/block/goose
@@ -43,13 +43,8 @@ Source1:        %{name}-%{version}-vendor.tar.xz
 # doing so.
 Source99:       generate-vendor-tarball.sh
 
-## Dependency patches (0000-0002)
+## Dependency patches (1-19)
 #
-# Add a `tui` feature flag to gate the TUI command behind a Cargo feature.
-# This patch can be dropped once it is merged upstream and goose released a new
-# version.
-#   * https://github.com/aaif-goose/goose/pull/9428
-Patch:          0000-Add-tui-feature-flag-for-tui-command.patch
 # Strip non-Linux platform deps (Windows winapi/winreg, macOS metal/apple-native
 # keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
 # entries (v8, cudaforge). Remove keyring 'vendored' feature (use system dbus).
@@ -59,18 +54,27 @@ Patch1:         0001-Strip-non-Linux-deps-and-use-system-libraries.patch
 # Switch sqlx from bundled 'sqlite' to 'sqlite-unbundled' to link against system
 # sqlite.
 Patch2:         0002-Set-downstream-feature-flags.patch
+# Downgrade pkcs8 from 0.11.0 to 0.10.2 so that pkcs1 (0.7.5), pkcs8, and sec1
+# (0.7) all resolve against the same spki/der/const-oid generation. Upstream
+# defaults to rustls-tls and never activates these optional deps together;
+# native-tls activates all three, exposing a type mismatch between spki 0.7 and
+# 0.8.
+Patch3:         0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch
+# aws-lc-rs on rcgen is enabled, which pulls in aws-lc-rs even when rust-tls is
+# disabled. Put it in the feature list with rust-tls so it is properly disabled.
+Patch4:         0004-aws-lc-rs-feature-flag.patch
 
-## Code patches (0003-0099)
+## Code patches (20-99)
 #
 # Avoid the 'RETURNING' SQL statement which requires SQLite 3.35.0. EPEL 9 is
 # stuck on 3.34.1, so we split the INSERT + SELECT into two statements.
-Patch3:         0003-Fix-sql-statement-from-session-manager.patch
+Patch20:         0020-Fix-sql-statement-from-session-manager.patch
 # Since we are disabling codemode feature, we need to update the snapshot of a
 # test so it passes when running `cargo test`. That's better than skipping the
 # test entirely.
-Patch4:         0004-Update-snapshot-test-without-codemode-instructions.patch
+Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
 
-## Downstream only patches
+## Downstream only patches (100-799)
 #
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
 # files that comes with the vendored crate, and instead, build from system
@@ -82,7 +86,7 @@ Patch4:         0004-Update-snapshot-test-without-codemode-instructions.patch
 # on the version bump from ring, otherwise, we should
 Patch0100:      0100-Downstream-only-never-use-pre-generated-object-files.patch
 
-## RHEL only patches
+## RHEL only patches (800-899)
 # Patches in the 800-899 range are applied only to RHEL.
 #
 # Add disclaimer as required by legal only on RHEL
@@ -131,8 +135,8 @@ Conflicts: golang-github-pressly-goose
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
 #
 #   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.36.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.36.0/crates/goose-cli/src/scenario_tests/recordings
+#   	- https://github.com/block/goose/tree/v1.38.0/crates/goose-mcp/src/computercontroller/tests/data
+#   	- https://github.com/block/goose/tree/v1.38.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the
@@ -143,6 +147,7 @@ Conflicts: golang-github-pressly-goose
 # (MIT OR Apache-2.0) AND Unicode-3.0
 # 0BSD OR MIT OR Apache-2.0
 # Apache-2.0
+# Apache-2.0 AND ISC
 # Apache-2.0 OR BSL-1.0
 # Apache-2.0 OR MIT
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
@@ -156,8 +161,6 @@ Conflicts: golang-github-pressly-goose
 # CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
 # CC0-1.0 OR MIT-0 OR Apache-2.0
 # ISC
-# ISC AND (Apache-2.0 OR ISC)
-# ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)
 # LGPL-3.0-or-later
 # MIT
 # MIT AND BSD-3-Clause
@@ -176,6 +179,7 @@ Conflicts: golang-github-pressly-goose
 License:        %{shrink:
                 (0BSD OR Apache-2.0 OR MIT)
                 AND Apache-2.0
+                AND (Apache-2.0 AND ISC)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT)
                 AND (Apache-2.0 OR BSD-1-Clause OR MIT)
@@ -183,9 +187,6 @@ License:        %{shrink:
                 AND (Apache-2.0 OR BSD-3-Clause)
                 AND (Apache-2.0 OR BSL-1.0)
                 AND (Apache-2.0 OR CC0-1.0 OR MIT-0)
-                AND (Apache-2.0 OR ISC)
-                AND (Apache-2.0 OR ISC OR MIT)
-                AND (Apache-2.0 OR ISC OR MIT-0)
                 AND (Apache-2.0 OR LGPL-2.1-or-later OR MIT)
                 AND (Apache-2.0 OR MIT)
                 AND (Apache-2.0 OR MIT OR Zlib)
@@ -194,8 +195,6 @@ License:        %{shrink:
                 AND (BSD-3-Clause AND MIT)
                 AND (BSD-3-Clause OR MIT)
                 AND BSL-1.0
-                AND bzip2-1.0.6
-                AND CC0-1.0
                 AND ISC
                 AND LGPL-3.0-or-later
                 AND MIT
@@ -204,6 +203,7 @@ License:        %{shrink:
                 AND MPL-2.0
                 AND Unicode-3.0
                 AND Zlib
+                AND bzip2-1.0.6
                 }
 # LICENSE.dependencies contains a full license breakdown
 

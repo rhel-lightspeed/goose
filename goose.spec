@@ -147,8 +147,8 @@ Conflicts: golang-github-pressly-goose
 # (MIT OR Apache-2.0) AND Unicode-3.0
 # 0BSD OR MIT OR Apache-2.0
 # Apache-2.0
+# Apache-2.0 AND ISC
 # Apache-2.0 OR BSL-1.0
-# Apache-2.0 OR BSL-1.0 OR MIT
 # Apache-2.0 OR MIT
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 # BSD-2-Clause
@@ -161,8 +161,6 @@ Conflicts: golang-github-pressly-goose
 # CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
 # CC0-1.0 OR MIT-0 OR Apache-2.0
 # ISC
-# ISC AND (Apache-2.0 OR ISC)
-# ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)
 # LGPL-3.0-or-later
 # MIT
 # MIT AND BSD-3-Clause
@@ -181,17 +179,14 @@ Conflicts: golang-github-pressly-goose
 License:        %{shrink:
                 (0BSD OR Apache-2.0 OR MIT)
                 AND Apache-2.0
+                AND (Apache-2.0 AND ISC)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT)
                 AND (Apache-2.0 OR BSD-1-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-2-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-3-Clause)
                 AND (Apache-2.0 OR BSL-1.0)
-                AND (Apache-2.0 OR BSL-1.0 OR MIT)
                 AND (Apache-2.0 OR CC0-1.0 OR MIT-0)
-                AND (Apache-2.0 OR ISC)
-                AND (Apache-2.0 OR ISC OR MIT)
-                AND (Apache-2.0 OR ISC OR MIT-0)
                 AND (Apache-2.0 OR LGPL-2.1-or-later OR MIT)
                 AND (Apache-2.0 OR MIT)
                 AND (Apache-2.0 OR MIT OR Zlib)
@@ -200,8 +195,6 @@ License:        %{shrink:
                 AND (BSD-3-Clause AND MIT)
                 AND (BSD-3-Clause OR MIT)
                 AND BSL-1.0
-                AND bzip2-1.0.6
-                AND CC0-1.0
                 AND ISC
                 AND LGPL-3.0-or-later
                 AND MIT
@@ -210,6 +203,7 @@ License:        %{shrink:
                 AND MPL-2.0
                 AND Unicode-3.0
                 AND Zlib
+                AND bzip2-1.0.6
                 }
 # LICENSE.dependencies contains a full license breakdown
 

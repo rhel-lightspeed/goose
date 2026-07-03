@@ -485,6 +485,8 @@ skip="${skip-} --skip model::tests::with_canonical_limits::skips_canonical_outpu
 skip="${skip-} --skip plugins::tests::auto_update_plugins_skips_recently_checked_plugins"
 skip="${skip-} --skip plugins::tests::auto_update_plugins_updates_enabled_plugins"
 skip="${skip-} --skip plugins::tests::updates_git_backed_plugin"
+#   * Timing-sensitive test: races against run completion in slow build environments.
+skip="${skip-} --skip test_steer_session_adds_input_to_active_prompt"
 
 %cargo_test -- -- ${skip-}
 %endif

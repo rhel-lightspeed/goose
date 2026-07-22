@@ -96,16 +96,17 @@ jobs:
     targets: *targets
 
   # Run internal test suite on Testing Farm (Red Hat ranch)
-  - job: tests
+  - &goose_tests_base
+    job: tests
     trigger: pull_request
     fmf_url: "https://gitlab.cee.redhat.com/rhel-lightspeed/enhanced-shell/goose-tests"
     fmf_ref: "develop"
     use_internal_tf: True
-    identifier: goose-tests
+    identifier: goose-tests-internal
     tmt_plan: "level0"
     env:
       GOOSE_TESTS_GOOSE_REDHAT_PACKAGE_SOURCE_PROFILE: "copr"
-    targets:
+    targets: &rhel_x86_64_targets
       # Run the x86_64 archs only for pull requests. This is faster and "economical" than having all other architectures as well.
       # We rarely see issues on other architectures, we only run them on a weekly basis inside the "rhel-lightspeed/enhanced-shell/goose-tests" repository as a scheduled pipeline.
       rhel-10-x86_64:
@@ -116,9 +117,27 @@ jobs:
         distros:
           - RHEL-9.8.0-Nightly
           - RHEL-9.9.0-Nightly
-    tf_extra_params:
+    tf_extra_params: &tf_extra_params
       environments:
         - settings:
             provisioning:
               tags:
                 BusinessUnit: rhel_sst_lightspeed@upstream
+  # Run public test suite on Testing Farm (Red Hat ranch)
+  - <<: *goose_tests_base
+    # The public test suite is an imported test plan, that's why we use the main branch here.
+    fmf_ref: "main"
+    identifier: goose-tests-public
+    tmt_plan: "goose-public"
+    env: ~
+    targets:
+      <<: *rhel_x86_64_targets
+      fedora-44-x86_64:
+        distros:
+          - Fedora-44
+      fedora-43-x86_64:
+        distros:
+          - Fedora-43
+      fedora-rawhide-x86_64:
+        distros:
+          - Fedora-Rawhide

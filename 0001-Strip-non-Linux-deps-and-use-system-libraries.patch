@@ -7,8 +7,8 @@ Subject: [PATCH] Strip non-Linux deps and use system libraries
  Cargo.toml                     |  9 ++-------
  crates/goose-cli/Cargo.toml    |  4 ----
  crates/goose-server/Cargo.toml |  3 ---
- crates/goose/Cargo.toml        | 11 -----------
- 4 files changed, 2 insertions(+), 25 deletions(-)
+ crates/goose/Cargo.toml        | 13 ++-----------
+ 4 files changed, 3 insertions(+), 26 deletions(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
 index e69de25..f5d7fb1 100644
@@ -81,6 +81,15 @@ diff --git a/crates/goose/Cargo.toml b/crates/goose/Cargo.toml
 index 47f172b..1ceee51 100644
 --- a/crates/goose/Cargo.toml
 +++ b/crates/goose/Cargo.toml
+@@ -130,7 +130,7 @@ tokio-cron-scheduler = { version = "0.15", default-features = false }
+ urlencoding = { workspace = true }
+ v_htmlescape = { version = "0.17", default-features = false, features = ["std"] }
+ sqlx = { version = "0.8.5", default-features = false, features = [
+-    "sqlite",
++    "sqlite-unbundled",
+     "chrono",
+     "json",
+     "macros",
 @@ -218,17 +218,6 @@ image = { version = "0.24.9", default-features = false, features = ["png", "jpeg
  subtle = { version = "2.5", default-features = false, features = ["std"] }
  gethostname = "1.1.0"

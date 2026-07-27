@@ -25,6 +25,11 @@
 %constrain_build -m 6144
 
 %global rustflags_codegen_units 16
+# Features used at build and test time via '%%cargo_build -n -f' and
+# '%%cargo_test -n -f' (-n = --no-default-features, -f = --features).
+# Must match the --features argument in generate-vendor-tarball.sh so the vendor
+# tarball contains exactly the crates needed to build this feature set.
+%global downstream_features native-tls,otel,telemetry,system-keyring,disable-update
 
 Name:           goose
 Version:        1.38.0
@@ -48,12 +53,11 @@ Source99:       generate-vendor-tarball.sh
 # Strip non-Linux platform deps (Windows winapi/winreg, macOS metal/apple-native
 # keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
 # entries (v8, cudaforge). Remove keyring 'vendored' feature (use system dbus).
+# Switch sqlx from bundled 'sqlite' to 'sqlite-unbundled' to use system libsqlite3.
+# Feature flags (native-tls, otel, telemetry, system-keyring, disable-update) are
+# passed explicitly at build time via '%%cargo_build -n -f' and '%%cargo_test -n -f',
+# into Cargo.toml; see %build and %check.
 Patch1:         0001-Strip-non-Linux-deps-and-use-system-libraries.patch
-# Configure feature flags for downstream packaging: set default features to
-# native-tls, telemetry, otel, and system-keyring in goose-cli and goose-server.
-# Switch sqlx from bundled 'sqlite' to 'sqlite-unbundled' to link against system
-# sqlite.
-Patch2:         0002-Set-downstream-feature-flags.patch
 # Downgrade pkcs8 from 0.11.0 to 0.10.2 so that pkcs1 (0.7.5), pkcs8, and sec1
 # (0.7) all resolve against the same spki/der/const-oid generation. Upstream
 # defaults to rustls-tls and never activates these optional deps together;
@@ -69,9 +73,9 @@ Patch4:         0004-aws-lc-rs-feature-flag.patch
 # Avoid the 'RETURNING' SQL statement which requires SQLite 3.35.0. EPEL 9 is
 # stuck on 3.34.1, so we split the INSERT + SELECT into two statements.
 Patch20:         0020-Fix-sql-statement-from-session-manager.patch
-# Since we are disabling codemode feature, we need to update the snapshot of a
-# test so it passes when running `cargo test`. That's better than skipping the
-# test entirely.
+# code-mode is not in the --features list passed at build time, so we update
+# the snapshot test so it passes without that feature. That's better than
+# skipping the test entirely.
 Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
 
 ## Downstream only patches (100-799)
@@ -449,7 +453,10 @@ find -name '*.rs' -type f -perm /111 -exec chmod -v -x '{}' '+'
 # use pkg-config.
 export RUSTONIG_SYSTEM_LIBONIG=1
 
-%cargo_build
+# Explicitly disable upstream defaults (includes rustls-tls, aws-providers, tui,
+# code-mode, and other features incompatible with Fedora packaging guidelines)
+# and activate only the features needed for downstream packaging.
+%cargo_build -n -f "%{downstream_features}"
 
 # Generate man pages from clap CLI definitions
 export CARGO_MANIFEST_DIR="target/rpm"
@@ -486,7 +493,8 @@ skip="${skip-} --skip plugins::tests::auto_update_plugins_skips_recently_checked
 skip="${skip-} --skip plugins::tests::auto_update_plugins_updates_enabled_plugins"
 skip="${skip-} --skip plugins::tests::updates_git_backed_plugin"
 
-%cargo_test -- -- ${skip-}
+# Use the same feature set as %build.
+%cargo_test -n -f "%{downstream_features}" -- -- ${skip-}
 %endif
 
 

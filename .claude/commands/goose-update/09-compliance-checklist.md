@@ -23,6 +23,17 @@ Requires: All previous phases completed.
 - [ ] `%cargo_test` used in `%check`
 - [ ] `%cargo_generate_buildrequires` NOT used (forbidden with vendored builds)
 
+## Feature Flags
+All three call sites must carry identical flags. Upstream defaults include
+`rustls-tls` and `aws-providers`, which pull in forbidden content; they must
+be suppressed by `-n` (`--no-default-features`). The cargo-rpm-macros short
+options are `-n` (no-default-features) and `-f <list>` (features).
+- [ ] `%cargo_build` carries `-n -f "%{downstream_features}"`
+- [ ] `%cargo_test` carries `-n -f "%{downstream_features}"` (before the `-- --` separator)
+- [ ] `cargo vendor-filterer` in `generate-vendor-tarball.sh` carries the same flags
+- [ ] No `0002-Set-downstream-feature-flags.patch` (or similar) patching Cargo.toml
+  default features — feature selection belongs in the build invocation, not a patch
+
 ## System Libraries
 (Only check crates still present after Phase 5.2.1 — skip any that were dropped)
 - [ ] `bzip2-sys` pruned, `pkgconfig(bzip2)` in BuildRequires

@@ -1,10 +1,12 @@
 #!/bin/bash
 set -euo pipefail
 
-# List of patches to be applied in the vendored folder
+# List of patches to be applied in the vendored folder.
+# These are Cargo.toml patches that affect dependency resolution and therefore
+# determine which crates need to be vendored. Feature flag selection is handled
+# via --no-default-features --features passed to cargo vendor-filterer directly.
 PATCHES=(
     "0001-Strip-non-Linux-deps-and-use-system-libraries.patch"
-    "0002-Set-downstream-feature-flags.patch"
     "0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch"
     "0004-aws-lc-rs-feature-flag.patch"
 )
@@ -80,7 +82,14 @@ export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
 rm -rf vendor
 
 echo "[+] Generating vendor folder (Linux-only via cargo-vendor-filterer)..."
-cargo vendor-filterer "${PLATFORM_ARGS[@]}" --versioned-dirs
+# --no-default-features disables upstream defaults that would pull in forbidden
+# content (rustls, aws-lc-rs via aws-providers). --features mirrors the feature
+# set used in %cargo_build and %cargo_test so the vendor tarball contains exactly
+# what is needed to build the downstream package.
+cargo vendor-filterer "${PLATFORM_ARGS[@]}" \
+    --no-default-features \
+    --features native-tls,otel,telemetry,system-keyring,disable-update \
+    --versioned-dirs
 
 echo "[+] Generating tarball of vendor folder..."
 tar Jcf "../$NAME-$VERSION-vendor.tar.xz" vendor/ >/dev/null 2>&1

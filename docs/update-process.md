@@ -79,6 +79,12 @@ If blockers are found, the update stops here with an explanation.
 Simple mechanical steps:
 - Updates the `Version:` tag in `goose.spec`
 - Downloads the new source tarball with `spectool -g`
+- **Updates `sources`** to match the new tarball. The file uses the same
+  BSD-style SHA512 format as Fedora dist-git (`SHA512 (filename) = hash`).
+  Compute the new hash with `sha512sum goose-<version>.tar.gz` and update
+  both the digest and the filename in that file. It is verified by
+  `generate-vendor-tarball.sh` before extraction to prevent a compromised
+  upstream tag from silently injecting malicious code (RSPEED-3364).
 
 ### Phase 3: Patch Rebase
 

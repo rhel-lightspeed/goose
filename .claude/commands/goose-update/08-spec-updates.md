@@ -83,7 +83,58 @@ Check if these workarounds in `%prep` are still needed:
 3. **Cargo checksum clearing**: Any `prune_vendor` or sed workaround that
    modifies vendored crate files must also patch `.cargo-checksum.json`.
 
-## 8.6 Source and Patch Declarations
+## 8.6 Build-Time Feature Flags
+
+Downstream feature selection is expressed as explicit cargo arguments rather
+than patched Cargo.toml defaults. Verify all three call sites use identical
+flags after every version update.
+
+**The canonical feature set** (stored in `%{downstream_features}`):
+```
+native-tls,otel,telemetry,system-keyring,disable-update
+```
+
+`%cargo_build` and `%cargo_test` use the cargo-rpm-macros short options:
+`-n` = `--no-default-features`, `-f <list>` = `--features <list>`.
+
+### 8.6.1 Spec `%build` section
+
+`%cargo_build` must carry both flags:
+
+```
+%cargo_build -n -f "%{downstream_features}"
+```
+
+### 8.6.2 Spec `%check` section
+
+`%cargo_test` must carry the same flags (before the `-- --` separator):
+
+```
+%cargo_test -n -f "%{downstream_features}" -- -- ${skip-}
+```
+
+### 8.6.3 `generate-vendor-tarball.sh`
+
+`cargo vendor-filterer` must carry the same flags so the vendor tarball is
+generated with only the crates needed for the downstream feature set. Without
+`--no-default-features`, upstream defaults (rustls-tls, aws-providers, …) would
+pull in forbidden content (rustls crates, aws-lc-rs):
+
+```bash
+cargo vendor-filterer "${PLATFORM_ARGS[@]}" \
+    --no-default-features \
+    --features native-tls,otel,telemetry,system-keyring,disable-update \
+    --versioned-dirs
+```
+
+### 8.6.4 When to change the feature set
+
+Only change these flags when a new upstream feature replaces or augments one of
+the five listed. When that happens, update **all three call sites** atomically
+and re-generate the vendor tarball. Never add features that pull in forbidden
+content (see Phase 5 and the compliance checklist).
+
+## 8.7 Source and Patch Declarations
 
 When adding new `Source` or `Patch` tags to the spec, verify these rules:
 

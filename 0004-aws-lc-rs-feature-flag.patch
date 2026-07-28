@@ -1,8 +1,18 @@
+From 632d0806d7d20a02cc8d82caeeb623ab1527976a Mon Sep 17 00:00:00 2001
+From: thepetk <thepetk@gmail.com>
+Date: Tue, 21 Jul 2026 16:27:08 +0100
+Subject: [PATCH] aws-lc-rs feature flag
+
+---
+ Cargo.lock                     | 2 ++
+ crates/goose-server/Cargo.toml | 6 +++++-
+ 2 files changed, 7 insertions(+), 1 deletion(-)
+
 diff --git a/Cargo.lock b/Cargo.lock
-index bb1d3e7108..6f7d4c59ea 100644
+index 122aadd..df19383 100644
 --- a/Cargo.lock
 +++ b/Cargo.lock
-@@ -8156,6 +8156,7 @@ checksum = "57f6d249aad744e274e682777a50283a225a32705394ee6d5fcc01efa25e4055"
+@@ -8716,6 +8716,7 @@ checksum = "57f6d249aad744e274e682777a50283a225a32705394ee6d5fcc01efa25e4055"
  dependencies = [
   "aws-lc-rs",
   "pem",
@@ -10,7 +20,7 @@ index bb1d3e7108..6f7d4c59ea 100644
   "rustls-pki-types",
   "time",
   "x509-parser",
-@@ -12938,6 +12939,7 @@ dependencies = [
+@@ -13766,6 +13767,7 @@ dependencies = [
   "lazy_static",
   "nom 7.1.3",
   "oid-registry",
@@ -19,18 +29,18 @@ index bb1d3e7108..6f7d4c59ea 100644
   "thiserror 2.0.18",
   "time",
 diff --git a/crates/goose-server/Cargo.toml b/crates/goose-server/Cargo.toml
-index add298a07d..3de662a50e 100644
+index c8127c3..a02e338 100644
 --- a/crates/goose-server/Cargo.toml
 +++ b/crates/goose-server/Cargo.toml
-@@ -38,6 +38,7 @@ rustls-tls = [
+@@ -35,6 +35,7 @@ rustls-tls = [
      "axum-server/tls-rustls",
      "dep:rustls",
      "dep:aws-lc-rs",
 +    "rcgen/aws_lc_rs",
      "goose/rustls-tls",
      "goose-mcp/rustls-tls",
- ]
-@@ -45,6 +46,9 @@ native-tls = [
+     "goose-providers/rustls-tls",
+@@ -43,6 +44,9 @@ native-tls = [
      "reqwest/native-tls",
      "tokio-tungstenite/native-tls",
      "axum-server/tls-openssl",
@@ -40,7 +50,7 @@ index add298a07d..3de662a50e 100644
      "dep:openssl",
      "goose/native-tls",
      "goose-mcp/native-tls",
-@@ -85,7 +89,7 @@ socket2 = { version = "0.6", default-features = false }
+@@ -84,7 +88,7 @@ socket2 = { version = "0.6", default-features = false }
  fs2 = { workspace = true }
  rustls = { workspace = true, optional = true }
  uuid = { workspace = true }
@@ -49,3 +59,6 @@ index add298a07d..3de662a50e 100644
  axum-server = { version = "0.8", default-features = false }
  aws-lc-rs = { version = "1.17", default-features = false, optional = true }
  openssl = { version = "0.10.66", default-features = false, optional = true }
+-- 
+2.43.0
+

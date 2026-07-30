@@ -1,8 +1,17 @@
+From 082f1150ade989fcb28dcf241485e5c4e14b921f Mon Sep 17 00:00:00 2001
+From: thepetk <thepetk@gmail.com>
+Date: Tue, 21 Jul 2026 16:28:27 +0100
+Subject: [PATCH] Fix SQL statement from session manager
+
+---
+ crates/goose/src/session/session_manager.rs | 15 +++++++++++----
+ 1 file changed, 11 insertions(+), 4 deletions(-)
+
 diff --git a/crates/goose/src/session/session_manager.rs b/crates/goose/src/session/session_manager.rs
-index 5c6559b..369d97a 100644
+index 1abdf14..312b656 100644
 --- a/crates/goose/src/session/session_manager.rs
 +++ b/crates/goose/src/session/session_manager.rs
-@@ -1084,7 +1084,7 @@ impl SessionStorage {
+@@ -1289,7 +1289,7 @@ impl SessionStorage {
          let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
  
          let today = chrono::Utc::now().format("%Y%m%d").to_string();
@@ -11,7 +20,7 @@ index 5c6559b..369d97a 100644
              r#"
                  INSERT INTO sessions (id, name, user_set_name, session_type, working_dir, extension_data, goose_mode)
                  VALUES (
-@@ -1100,8 +1100,7 @@ impl SessionStorage {
+@@ -1305,8 +1305,7 @@ impl SessionStorage {
                      '{}',
                      ?
                  )
@@ -21,7 +30,7 @@ index 5c6559b..369d97a 100644
          )
              .bind(&today)
              .bind(&today)
-@@ -1109,9 +1108,17 @@ impl SessionStorage {
+@@ -1314,9 +1313,17 @@ impl SessionStorage {
              .bind(session_type.to_string())
              .bind(&*working_dir.to_string_lossy())
              .bind(goose_mode.to_string())
@@ -40,3 +49,6 @@ index 5c6559b..369d97a 100644
          tx.commit().await?;
          #[cfg(feature = "telemetry")]
          crate::posthog::emit_session_started();
+-- 
+2.43.0
+

@@ -1,17 +1,17 @@
-From 50bf2e0a81cf7aa02f5bb4e2a5a1fc7a3521a8e4 Mon Sep 17 00:00:00 2001
-From: Sam Doran <sdoran@redhat.com>
-Date: Tue, 23 Jun 2026 10:42:47 -0400
+From bdc2c3cd8a789d9a5b486d638878b2b409eacb38 Mon Sep 17 00:00:00 2001
+From: thepetk <thepetk@gmail.com>
+Date: Tue, 21 Jul 2026 15:30:40 +0100
 Subject: [PATCH] Strip non-Linux deps and use system libraries
 
 ---
- Cargo.toml                     |  9 ++-------
- crates/goose-cli/Cargo.toml    |  4 ----
- crates/goose-server/Cargo.toml |  3 ---
- crates/goose/Cargo.toml        | 13 ++-----------
- 4 files changed, 3 insertions(+), 26 deletions(-)
+ Cargo.toml                     | 16 ++--------------
+ crates/goose-cli/Cargo.toml    |  5 -----
+ crates/goose-server/Cargo.toml |  4 ----
+ crates/goose/Cargo.toml        | 15 ---------------
+ 4 files changed, 2 insertions(+), 38 deletions(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index e69de25..f5d7fb1 100644
+index d0022e7..99e52aa 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -1,8 +1,6 @@
@@ -22,7 +22,7 @@ index e69de25..f5d7fb1 100644
 -    "vendor/v8",
  ]
  resolver = "2"
- 
+
 @@ -44,7 +42,7 @@ http = { version = "1.1", default-features = false, features = ["std"] }
  ignore = { version = "0.4.12", default-features = false }
  include_dir = { version = "0.7", default-features = false }
@@ -31,7 +31,7 @@ index e69de25..f5d7fb1 100644
 +keyring = { version = "3.6.3", default-features = false }
  lru = { version = "0.18", default-features = false }
  once_cell = { version = "1.21.3", default-features = false, features = ["std"] }
- rand = { version = "0.8.5", default-features = false, features = ["std"] }
+ rand = "0.10.1"
 @@ -72,7 +70,7 @@ utoipa = { version = "4.2", default-features = false }
  uuid = { version = "1.23", default-features = false, features = ["v4", "std"] }
  webbrowser = { version = "1", default-features = false }
@@ -41,21 +41,30 @@ index e69de25..f5d7fb1 100644
  wiremock = { version = "0.6", default-features = false }
  zip = { version = "8", default-features = false, features = ["deflate"] }
  serial_test = { version = "3", default-features = false }
-@@ -110,6 +108,3 @@ llama-cpp-sys-2 = { version = "=0.1.146", default-features = false }
+@@ -110,15 +108,5 @@ llama-cpp-sys-2 = { version = "=0.1.146", default-features = false }
  icu_calendar = { version = "=2.1.1", default-features = false }
  icu_locale = { version = "=2.1.1", default-features = false }
- 
+
 -[patch.crates-io]
 -v8 = { path = "vendor/v8" }
 -cudaforge = { git = "https://github.com/jbg/cudaforge", rev = "e7c1967340e40673db98dc9e17da0f04834a456f" }
+-
+-# Dependencies don't need debug info. You rarely step-debug into third-party
+-# crates, but their DWARF dominates `target/debug` — roughly 50-70% of each
+-# dependency rlib in this workspace is debug info. Dropping it for dependencies
+-# only shrinks the debug build substantially and speeds linking. The "*" spec
+-# matches all dependencies but NOT workspace members, so first-party crates keep
+-# full debug info and stay fully debuggable; release builds are unaffected.
+ [profile.dev.package."*"]
+ debug = false
 diff --git a/crates/goose-cli/Cargo.toml b/crates/goose-cli/Cargo.toml
-index 2f33e21..9290c5c 100644
+index e50ee6d..aaece4e 100644
 --- a/crates/goose-cli/Cargo.toml
 +++ b/crates/goose-cli/Cargo.toml
-@@ -66,10 +66,6 @@ sigstore-verify = { version = "0.8", default-features = false, optional = true }
+@@ -66,10 +66,6 @@ sigstore-verify = { version = "0.9", default-features = false, optional = true }
  axum.workspace = true
  clap_complete_nushell = { version = "4", default-features = false }
- 
+
 -[target.'cfg(target_os = "windows")'.dependencies]
 -anstream = { version = "1", default-features = false, features = ["wincon"] }
 -winapi = { workspace = true }
@@ -63,14 +72,28 @@ index 2f33e21..9290c5c 100644
  [features]
  default = [
      "code-mode",
+@@ -89,5 +85,4 @@ aws-providers = ["goose/aws-providers"]
+ cuda = ["goose/cuda", "local-inference"]
+ vulkan = ["goose/vulkan", "local-inference"]
+-mlx = ["goose/mlx", "local-inference"]
+ telemetry = ["goose/telemetry"]
+ nostr = ["goose/nostr"]
 diff --git a/crates/goose-server/Cargo.toml b/crates/goose-server/Cargo.toml
-index add298a..0fe99a5 100644
+index dd43047..20ce107 100644
 --- a/crates/goose-server/Cargo.toml
 +++ b/crates/goose-server/Cargo.toml
-@@ -91,9 +91,6 @@ aws-lc-rs = { version = "1.17", default-features = false, optional = true }
+@@ -27,7 +27,6 @@ local-inference = ["goose/local-inference"]
+ aws-providers = ["goose/aws-providers"]
+ cuda = ["goose/cuda", "local-inference"]
+ vulkan = ["goose/vulkan", "local-inference"]
+-mlx = ["goose/mlx", "local-inference"]
+ telemetry = ["goose/telemetry"]
+ nostr = ["goose/nostr"]
+ otel = ["goose/otel"]
+@@ -94,9 +93,6 @@ aws-lc-rs = { version = "1.17", default-features = false, optional = true }
  openssl = { version = "0.10.66", default-features = false, optional = true }
  pem = { version = "3.0.2", default-features = false, features = ["std"] }
- 
+
 -[target.'cfg(windows)'.dependencies]
 -winreg = { version = "0.56", default-features = false }
 -
@@ -78,22 +101,31 @@ index add298a..0fe99a5 100644
  name = "goosed"
  path = "src/main.rs"
 diff --git a/crates/goose/Cargo.toml b/crates/goose/Cargo.toml
-index 47f172b..1ceee51 100644
+index 9dc486e..87f5a5c 100644
 --- a/crates/goose/Cargo.toml
 +++ b/crates/goose/Cargo.toml
-@@ -130,7 +130,7 @@ tokio-cron-scheduler = { version = "0.15", default-features = false }
- urlencoding = { workspace = true }
- v_htmlescape = { version = "0.17", default-features = false, features = ["std"] }
- sqlx = { version = "0.8.5", default-features = false, features = [
--    "sqlite",
-+    "sqlite-unbundled",
-     "chrono",
-     "json",
-     "macros",
-@@ -218,17 +218,6 @@ image = { version = "0.24.9", default-features = false, features = ["png", "jpeg
+@@ -41,7 +41,6 @@ aws-providers = [
+ ]
+ cuda = ["local-inference", "candle-core/cuda", "candle-nn/cuda", "llama-cpp-2/cuda"]
+ vulkan = ["local-inference", "llama-cpp-2/vulkan"]
+-mlx = ["local-inference", "dep:mlx-rs", "dep:mlx-lm", "dep:mlx-lm-utils"]
+ rustls-tls = [
+     "dep:rustls",
+     "reqwest/rustls",
+@@ -204,9 +203,6 @@ nostr = { version = "0.44", default-features = false, features = ["nip44", "std"
+ nostr-sdk = { version = "0.44", default-features = false, features = ["nip44"], optional = true }
+ rustls = { workspace = true, optional = true }
+ hf-hub = { version = "1.0.0-rc.1", default-features = false, optional = true }
+-mlx-rs = { version = "0.25.3", default-features = false, features = ["accelerate", "metal", "safetensors"], optional = true }
+-mlx-lm = { git = "https://github.com/jh-block/mlx-lm", optional = true }
+-mlx-lm-utils = { git = "https://github.com/jh-block/mlx-lm", optional = true }
+
+ pctx_code_mode = { version = "0.3", default-features = false, optional = true }
+
+@@ -220,17 +216,6 @@ image = { version = "0.24.9", default-features = false, features = ["png", "jpe
  subtle = { version = "2.5", default-features = false, features = ["std"] }
  gethostname = "1.1.0"
- 
+
 -[target.'cfg(target_os = "windows")'.dependencies]
 -winapi = { workspace = true }
 -keyring = { workspace = true, features = ["windows-native"], optional = true }
@@ -108,6 +140,6 @@ index 47f172b..1ceee51 100644
  [target.'cfg(target_os = "linux")'.dependencies]
  keyring = { workspace = true, features = ["sync-secret-service"], optional = true }
  libc = { version = "0.2.182", default-features = false, features = ["std"] }
--- 
-2.54.0
+--
+2.43.0
 

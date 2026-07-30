@@ -32,7 +32,7 @@
 %global downstream_features native-tls,otel,telemetry,system-keyring,disable-update
 
 Name:           goose
-Version:        1.38.0
+Version:        1.39.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/block/goose
@@ -139,8 +139,8 @@ Conflicts: golang-github-pressly-goose
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
 #
 #   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.38.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.38.0/crates/goose-cli/src/scenario_tests/recordings
+#   	- https://github.com/block/goose/tree/v1.39.0/crates/goose-mcp/src/computercontroller/tests/data
+#   	- https://github.com/block/goose/tree/v1.39.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the

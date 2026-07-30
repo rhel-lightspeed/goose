@@ -1,3 +1,59 @@
+* Thu Jun 25 2026 thepetk <thepetk@gmail.com> - 1.39.0-1
+- Update to version 1.39.0
+- /status slash command in CLI for session inspection
+- ACP method for managing recipes and session extensions
+- Typed request/response for add/get session extensions in ACP
+- Load session using ACP
+- Elicitation method for ACP with improvements
+- Elicitation decline and cancel actions propagation
+- Recipe handling in new_session
+- Use ACP to manage global config and session extensions
+- Change working directory using ACP
+- ACP cancel race condition fix
+- Load global hints from ~/.agents/AGENTS.md
+- Azure Entra ID bearer token auth via AZURE_OPENAI_AD_TOKEN
+- Track cache tokens for accurate cost reporting
+- Quarterly option for scheduler
+- Option to disable automatic update downloads
+- Accept string values for GOOSE_CONTEXT_LIMIT
+- EmpirioLabs as a declarative OpenAI-compatible provider
+- OrcaRouter as a declarative OpenAI-compatible provider
+- Together AI declarative provider
+- Add option for overriding API URL for Moonshot provider
+- MCP extensions support in open plugins
+- Peek mode for async background tasks in summon
+- Context, working_dir, and metadata parameters for summon delegate tasks
+- Move OpenAI provider and API client into goose-providers crate
+- Delete embeddings support (unused)
+- Accept JSON-encoded string for autovisualiser data parameter
+- Send User-Agent on URL image fetches in developer/read_image
+- Allow unlisted models in search
+- Do not pass temperature to ChatGPT Codex provider
+- Sanitize extension environment maps
+- Refresh provider when session working directory changes
+- Use refreshed gcloud token after reauth (retry Vertex AI on 401/403)
+- Start a turn when /goal or /grind is set
+- Dedupe duplicate tool-call ids within a turn
+- Resolve bundled extensions from discovery
+- Custom OpenAI provider dropping port when URL scheme is omitted
+- Clear rejected OAuth credentials after refresh
+- Keep extended thinking within the Anthropic output cap
+- Preserve custom API path in OpenAI base_url derivation
+- Repair PATH for plugin hook commands
+- Fall back to default provider when resuming session with unavailable provider
+- Read meta.n_ctx from /v1/models to fix context limit for local OpenAI servers
+- Show resolved skill supporting file paths
+- Record OpenAI-native cached_tokens in usage metering
+- Detect image paths with spaces
+- Ensure tool request timestamp precedes tool response timestamp
+- Inherit login-shell PATH in spawned subagents
+- Skip non-recipe project config files in summon
+- Evict stale completed tasks to prevent unbounded memory growth in summon
+- Warn on unmatched extension names in summon delegate
+- Make context exceeded checker more precise
+- Include agentInfo in ACP initialize response
+- Check for responses API support in Databricks
+
 * Wed Jun 17 2026 Sam Doran <sdoran@redhat.com> - 1.38.0-1
 - Update to version 1.38.0
 - Canonical thinking modes across providers

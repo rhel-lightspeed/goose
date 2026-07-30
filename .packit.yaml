@@ -31,48 +31,44 @@ actions:
     - grep -oP '^Version:\s+\K\S+' goose.spec
 
 _:
-  disable_checks: &disable_checks
-    without_opts:
-      - check
-
   pr_targets: &pr_targets
-    fedora-43-x86_64: *disable_checks
-    fedora-44-x86_64: *disable_checks
-    fedora-rawhide-x86_64: *disable_checks
-    epel-9-x86_64: *disable_checks
-    epel-10-x86_64: *disable_checks
-    rhel-9-x86_64: *disable_checks
-    rhel-10-x86_64: *disable_checks
+    fedora-43-x86_64: {}
+    fedora-44-x86_64: {}
+    fedora-rawhide-x86_64: {}
+    epel-9-x86_64: {}
+    epel-10-x86_64: {}
+    rhel-9-x86_64: {}
+    rhel-10-x86_64: {}
 
   targets: &targets
     <<: *pr_targets
-    fedora-43-aarch64: *disable_checks
-    fedora-43-ppc64le: *disable_checks
-    fedora-43-s390x: *disable_checks
+    fedora-43-aarch64: {}
+    fedora-43-ppc64le: {}
+    fedora-43-s390x: {}
 
-    fedora-44-aarch64: *disable_checks
-    fedora-44-ppc64le: *disable_checks
-    fedora-44-s390x: *disable_checks
+    fedora-44-aarch64: {}
+    fedora-44-ppc64le: {}
+    fedora-44-s390x: {}
 
-    fedora-rawhide-aarch64: *disable_checks
-    fedora-rawhide-ppc64le: *disable_checks
-    fedora-rawhide-s390x: *disable_checks
+    fedora-rawhide-aarch64: {}
+    fedora-rawhide-ppc64le: {}
+    fedora-rawhide-s390x: {}
 
-    epel-9-aarch64: *disable_checks
-    epel-9-ppc64le: *disable_checks
-    epel-9-s390x: *disable_checks
+    epel-9-aarch64: {}
+    epel-9-ppc64le: {}
+    epel-9-s390x: {}
 
-    epel-10-aarch64: *disable_checks
-    epel-10-ppc64le: *disable_checks
-    epel-10-s390x: *disable_checks
+    epel-10-aarch64: {}
+    epel-10-ppc64le: {}
+    epel-10-s390x: {}
 
-    rhel-9-aarch64: *disable_checks
-    rhel-9-s390x: *disable_checks
-    rhel-9-ppc64le: *disable_checks
+    rhel-9-aarch64: {}
+    rhel-9-s390x: {}
+    rhel-9-ppc64le: {}
 
-    rhel-10-aarch64: *disable_checks
-    rhel-10-s390x: *disable_checks
-    rhel-10-ppc64le: *disable_checks
+    rhel-10-aarch64: {}
+    rhel-10-s390x: {}
+    rhel-10-ppc64le: {}
 
 jobs:
   - job: copr_build

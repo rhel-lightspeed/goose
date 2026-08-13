@@ -14,39 +14,17 @@ Always assume you are running inside the packaging repository root.
 
 ---
 
-## Fedora Packaging Compliance
+## Compliance Context
 
-This package MUST strictly follow:
-- Fedora Packaging Guidelines (https://docs.fedoraproject.org/en-US/packaging-guidelines/)
-- Fedora Rust Packaging Guidelines (https://docs.fedoraproject.org/en-US/packaging-guidelines/Rust/)
+All project-wide rules (Fedora compliance references, forbidden dependencies,
+patch numbering, feature flags, Source/Patch declaration rules) are documented
+in `AGENTS.md`. Read it before starting — the phase files reference those
+rules without repeating them.
 
-All licenses MUST be valid SPDX identifiers listed in the Fedora approved
-license list:
-- Approved licenses: https://docs.fedoraproject.org/en-US/legal/license-approval/
-- Not allowed licenses: https://docs.fedoraproject.org/en-US/legal/not-allowed-licenses/
-
-Key Rust packaging rules that apply to this package:
-- `BuildRequires: cargo-rpm-macros >= 25` (required for vendored builds)
-- `%cargo_prep -v vendor` in `%prep` (sets up vendored build)
-- `%cargo_build` in `%build`
-- `%cargo_vendor_manifest` MUST be called in `%build`
-- `%{cargo_license_summary}` MUST be called in `%build`
-- `%{cargo_license}` MUST generate `LICENSE.dependencies`
-- `cargo-vendor.txt` MUST be listed as `%license` in `%files`
-- `LICENSE.dependencies` MUST be listed as `%license` in `%files`
-- `%cargo_generate_buildrequires` MUST NOT be used with vendored builds
-- `%cargo_test` in `%check`
-- License tag must be a valid SPDX expression covering all compiled code
-- All bundled content must have `Provides: bundled()` entries
-
-Source and Patch declaration rules:
-- `Source` and `Patch` tags MUST always be declared unconditionally — never
-  wrap them in `%if`/`%endif` conditionals
-- Distribution-specific conditionals (e.g., `%if 0%{?rhel}`) MUST be applied
-  in `%prep` when applying patches (using `%autopatch` with `-m`/`-M` ranges),
-  not on the declaration lines
-- This ensures the SRPM always contains all files regardless of build target,
-  and the build system decides at `%prep` time which patches to apply
+Also read `docs/lessons-learned.md` before starting (Phase 1 does this too,
+but read it now so you have context for the whole run, not just Phase 1).
+It records past mistakes so they aren't repeated. Phase 8 ends with a retro
+step that appends to it when something new is learned.
 
 ---
 
@@ -61,17 +39,14 @@ skip a compliance check. Always show the user what changed before proceeding.
 
 | Phase | File | Description |
 |-------|------|-------------|
-| 1 | `goose-update/01-preflight.md` | Version blocker analysis, feature flags, changelog review |
-| 2 | `goose-update/02-source-update.md` | Update spec version, download new tarball |
-| 3 | `goose-update/03-patch-rebase.md` | Test and rebase all patches (defer 3.6 until after Phase 4) |
-| 4 | `goose-update/04-vendor-tarball.md` | Update vendor script, generate tarball, then return to 3.6 |
-| 5 | `goose-update/05-dependency-compliance.md` | Forbidden crates, system library linkage, prebuilt scan |
-| 6 | `goose-update/06-bundled-content.md` | Sublime syntax, themes, JS/CSS, other embedded assets |
-| 7 | `goose-update/07-license-audit.md` | License validation, SPDX check, License field update |
-| 8 | `goose-update/08-spec-updates.md` | Binary targets, BuildRequires, test skips, %prep, Source/Patch |
-| 9 | `goose-update/09-compliance-checklist.md` | Full BZ#2428704 compliance pass/fail checklist |
-| 10 | `goose-update/10-build-verification.md` | SRPM build, changelog, next steps |
-| 11 | `goose-update/11-changelog-update.md` | Update changelog with upstream release notes |
+| 1 | `goose-update/01-source-and-preflight.md` | Update spec version, download tarball, check blockers, features, changelog |
+| 2 | `goose-update/02-patches-and-vendor.md` | Test/rebase all patches, generate vendor tarball, test vendor patches |
+| 3 | `goose-update/03-dependency-compliance.md` | Forbidden crates, system library linkage, prebuilt scan |
+| 4 | `goose-update/04-bundled-content.md` | Sublime syntax, themes, JS/CSS, other embedded assets |
+| 5 | `goose-update/05-license-audit.md` | License validation, SPDX check, License field update |
+| 6 | `goose-update/06-spec-updates.md` | Binary targets, BuildRequires, test skips, %prep, Source/Patch |
+| 7 | `goose-update/07-compliance-gate.md` | Final compliance gate — cross-cutting checks + phase summary |
+| 8 | `goose-update/08-changelog-and-build.md` | Write changelog, build SRPM, next steps |
 
 Read each phase file with the Read tool as you reach it. Do not read all files
 upfront — process them one at a time to keep context focused.

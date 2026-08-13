@@ -1,13 +1,13 @@
 # Goose Version Update Process
 
 This document explains how to update the goose RPM package to a new upstream
-version using the Claude Code commands in this repository.
+version using the agent commands in this repository.
 
 ## Prerequisites
 
-- **Claude Code** installed and configured
+- **Agent** with access to shell tools (Claude Code, Goose, etc.)
 - **Toolbox container `tdx`** with: `cargo`, `fedpkg`, `rpmspec`, `spectool`,
-  `cargo-license`, `rg` (ripgrep)
+  `cargo-license`, `rg` (ripgrep), `fd`, `gh` (GitHub CLI)
 - Access to the goose packaging repository
 - Familiarity with RPM spec files and Fedora packaging basics
 
@@ -19,184 +19,163 @@ To run the full update process:
 /goose-update/00-full-update 1.35.0
 ```
 
-This orchestrates all 10 phases sequentially, pausing for user confirmation at
+This orchestrates all 8 phases sequentially, pausing for user confirmation at
 key decision points.
 
 To re-run a specific phase (e.g., just the license audit):
 
 ```
-/goose-update/07-license-audit
+/goose-update/05-license-audit
 ```
+
+## Design Principles
+
+The update commands follow these principles:
+
+1. **Discovery over declaration** — Commands don't hardcode patch names, crate
+   lists, or workaround details. The agent discovers the current state by
+   reading files and running tools.
+
+2. **Local over remote** — All analysis works against the tarball downloaded
+   via `spectool -g`. Individual files are never fetched from GitHub.
+
+3. **Verify deterministically** — Each phase ends with verification checks
+   using `patch --dry-run`, `fd`, `rg`, `diff`, etc.
+
+4. **`.orig` pattern** — Before modifying any file in the extracted source,
+   copy it to `.orig`. Generate patches with `diff -u --label`.
+
+5. **Each phase owns its verification** — No deferred checking. If a phase
+   can't verify its own work, it stops.
+
+6. **Stop instead of guessing** — When a phase file's decision tree runs out
+   (a patch is ambiguous, a new `-sys` crate has no system package, a new
+   upstream feature isn't in `%{downstream_features}`), the agent stops and
+   asks rather than silently picking an option.
+
+7. **Learn from past runs** — `docs/lessons-learned.md` records past mistakes
+   and workflow gaps. It's read at the start of every update (Phase 1) and
+   appended to at the end (Phase 8) when something new surfaces.
 
 ## Update Phases
 
-The update process is split into 10 phases, each handling a distinct concern.
-The orchestrator (`00-full-update`) reads each phase file on demand and follows
-its instructions.
-
 ```
-Phase 1: Pre-flight ──> Phase 2: Source ──> Phase 3: Patch Rebase ──┐
-                                                                     │
-              ┌──────────────────────────────────────────────────────┘
-              │
-              v
-         Phase 4: Vendor Tarball
-              │
-              ├──> return to Phase 3.6 (test vendor patches)
-              │
-              v
-         Phase 5: Dependency Compliance
-              │
-              v
-         Phase 6: Bundled Content Audit
-              │
-              v
-         Phase 7: License Audit
-              │
-              v
-         Phase 8: Spec File Updates
-              │
-              v
-         Phase 9: Compliance Checklist
-              │
-              v
-         Phase 10: Build Verification ──> Done
+Phase 1: Source Setup & Pre-flight
+         │
+         v
+Phase 2: Patches & Vendor Tarball
+         │
+         v
+Phase 3: Dependency Compliance
+         │
+         v
+Phase 4: Bundled Content Audit
+         │
+         v
+Phase 5: License Audit
+         │
+         v
+Phase 6: Spec File Updates
+         │
+         v
+Phase 7: Final Compliance Gate
+         │
+         v
+Phase 8: Changelog & Build Verification ──> Done
 ```
 
-### Phase 1: Pre-flight Checks
+### Phase 1: Source Setup & Pre-flight
 
-Validates that the target version is safe to package:
-- Checks for **blocking dependencies** (v8, deno-core, swc, wasm-bindgen) in
-  the upstream `Cargo.lock`
-- Analyzes **feature flags** to determine which to enable/disable
-- Reviews the **upstream changelog** for breaking changes, new binaries, and
-  dependency changes
+Reads `docs/lessons-learned.md` for context, verifies all required tools are
+available (see AGENTS.md), then updates the spec version, downloads and
+extracts the tarball locally, and validates that the target version is safe
+to package:
+- Checks for **blocking dependencies** (v8, deno-core, swc) in `Cargo.lock`
+- Compares upstream **feature names** against `%{downstream_features}` — does
+  not edit `Cargo.toml` (see AGENTS.md's "Downstream Feature Flags")
+- Reviews the **upstream changelog** via `gh release view`
 
-If blockers are found, the update stops here with an explanation.
+The extracted source is kept for subsequent phases.
 
-### Phase 2: Source Update
+### Phase 2: Patches & Vendor Tarball
 
-Simple mechanical steps:
-- Updates the `Version:` tag in `goose.spec`
-- Downloads the new source tarball with `spectool -g`
-- **Updates `sources`** to match the new tarball. The file uses the same
-  BSD-style SHA512 format as Fedora dist-git (`SHA512 (filename) = hash`).
-  Compute the new hash with `sha512sum goose-<version>.tar.gz` and update
-  both the digest and the filename in that file. It is verified by
-  `generate-vendor-tarball.sh` before extraction to prevent a compromised
-  upstream tag from silently injecting malicious code (RSPEED-3364).
+Handles the full patch lifecycle in one pass:
+- Tests all non-vendor patches with `patch -p1 --dry-run`
+- Rebases failures using the `.orig` + `diff -u --label` pattern
+- Verifies and updates `generate-vendor-tarball.sh`
+- Generates the vendor tarball
+- Tests vendor patches (0100+) against the new vendor directory
 
-### Phase 3: Patch Rebase
+### Phase 3: Dependency Compliance
 
-The most critical phase. Tests all existing patches against the new source:
-- **0000-0099**: Dependency patches (Cargo.toml modifications)
-- **0100-0199**: Vendor-targeting patches (paths start with `vendor/`)
-- **0800-0899**: RHEL-only patches (applied conditionally)
+Dynamically discovers `-sys` crates in the vendor tree and cross-references
+against the spec's `%prep` section:
+- Verifies **forbidden crates** are absent
+- Detects **new `-sys` crates** needing `prune_vendor` + `BuildRequires`
+- Removes **stale entries** for dropped crates
+- Scans for **prebuilt binaries**
 
-Patches are classified as: applies cleanly, needs rebase, merged upstream
-(drop), or no longer relevant. Dependency patches (0000, 0001) almost always
-need regenerating when upstream changes dependencies.
+### Phase 4: Bundled Content Audit
 
-**Note:** Step 3.6 (vendor patches) is deferred until after Phase 4.
+Scans for non-crate artifacts needing `Provides: bundled()` entries:
+syntax definitions, themes, JS/CSS libraries, embedded data files.
 
-### Phase 4: Vendor Tarball Generation
+### Phase 5: License Audit
 
-Updates `generate-vendor-tarball.sh` with any patch changes, then runs it to
-produce the new vendor tarball. After this, Phase 3.6 runs to test
-vendor-targeting patches.
+Validates all licenses against Fedora approved/not-allowed lists. Updates
+the `License:` SPDX expression if needed.
 
-### Phase 5: Dependency Compliance Audit
+### Phase 6: Spec File Updates
 
-Enforces Fedora package review (BZ#2428704) rules:
-- Verifies **forbidden crates** (rustls, aws-lc) are not in the dependency tree
-- Checks which **-sys crates** are still needed and drops stale ones
-- Detects **new -sys crates** that need `prune_vendor` + `BuildRequires`
-- Scans for **prebuilt binaries** (`.o`, `.a`, `.so`) in the vendor tarball
+Catches everything else: binary targets, BuildRequires, test skips, `%prep`
+cleanup paths, vendored crate workarounds, feature flag consistency,
+Source/Patch declarations.
 
-### Phase 6: Bundled Content Audit
+### Phase 7: Final Compliance Gate
 
-Identifies non-crate artifacts that need `Provides: bundled()` entries:
-- **Sublime syntax definitions** from the `syntect` crate
-- **Syntect themes** bundled in assets
-- **Minified JS/CSS** libraries (Chart.js, D3, Leaflet, Mermaid, etc.)
-- **Other embedded data** via `include_bytes!()` / `include_str!()`
+Lightweight cross-cutting checks (package identity, build system macros,
+declaration rules) plus a summary table collecting pass/fail from all phases.
 
-Produces a summary table of what to add, remove, or update in the spec.
+### Phase 8: Changelog & Build Verification
 
-### Phase 7: License Audit
-
-Validates all licenses against Fedora requirements:
-- Runs `cargo license` for an early preemptive check
-- Cross-references against the Fedora **approved** and **not-allowed** license
-  lists
-- Updates the `License:` SPDX expression if needed
-- Checks bundled JS/CSS license files
-
-### Phase 8: Spec File Updates
-
-Catches everything else in the spec:
-- New **binary targets** and **man pages**
-- **BuildRequires** correctness
-- **Test skips** in `%check`
-- **%prep cleanup** paths (documentation, ui, bin, services)
-- **Vendored crate workarounds** (checks if upstream fixed them)
-- **Source/Patch declarations** (unconditional, correct number ranges)
-
-### Phase 9: Compliance Checklist
-
-Final pass/fail verification against the full BZ#2428704 requirements:
-package identity, build system, system libraries, forbidden content, licensing,
-content cleanup, and platform conditionals.
-
-### Phase 10: Build Verification
-
-- Builds the SRPM locally with `fedpkg srpm`
-- Notes that `%autochangelog` handles the changelog automatically
-- Suggests next steps: review diff, create PR, push for Packit/COPR builds
-
-## After the Update
-
-Once the version update is complete, the commands will self-update:
-- Patch names and numbers in Phase 3
-- -sys crate table in Phase 5
-- Bundled content lists in Phase 6
-- Workarounds in Phase 8 (drop resolved, add new)
-- Compliance checklist in Phase 9
-
-This keeps the instructions accurate for the next update cycle. See
-`AGENTS.md` for full details on the self-improvement process.
+Filters upstream release notes (removes disabled features, UI/desktop,
+excluded platforms) and writes RPM changelog entry. Then builds the SRPM
+locally, runs a retro against `docs/lessons-learned.md` (appending an entry
+and proposing phase-file edits if something new was learned), and suggests
+next steps (review diff, create PR, push for Packit/COPR builds).
 
 ## Troubleshooting
 
 ### Patch fails to apply
 
-Check if the change was merged upstream (`git log` on the upstream repo for
-the relevant files). If merged, drop the patch. If not, rebase manually
-against the new source.
+Check if the change was merged upstream by examining the target files in the
+new source. If merged, drop the patch. If not, rebase using the `.orig`
+pattern.
 
 ### Forbidden dependency detected
 
-Run `cargo tree -I <crate>` to see the full dependency chain. Usually this
-means a feature flag needs to be disabled in the 0001 patch, or a new entry
-needs to be added to the blocked dependencies list.
+Run `cargo tree --no-default-features --features "%{downstream_features}" -i
+<crate>` (the same flags used at build time) to see if it's actually
+reachable. If it's *not* reachable with those flags, there's nothing to do —
+some other feature combination pulls it in but ours doesn't. If it *is*
+reachable even with those flags, a crate is pulling it in unconditionally
+(e.g. via a required dependency, or another crate's own defaults); only then
+does it need a dependency patch. See "Downstream Feature Flags" in AGENTS.md
+— never patch `Cargo.toml` just to remove a feature that's already absent
+from `%{downstream_features}`.
 
 ### New -sys crate found
 
-Check `build.rs` to see if it uses `pkg_config` or `cc::Build`. If it bundles
-C source that has a Fedora system package, add a `prune_vendor` call and
-`BuildRequires`. If no system package exists, evaluate whether it contains
-prebuilt objects.
+Inspect `build.rs` to see if it uses `pkg_config` or `cc::Build`. If it
+bundles C source that has a Fedora system package, add `prune_vendor` +
+`BuildRequires`. If no system package exists, evaluate for prebuilt objects.
 
 ### License not on approved list
 
-Check the Fedora [approved licenses](https://docs.fedoraproject.org/en-US/legal/license-approval/)
-and [not-allowed licenses](https://docs.fedoraproject.org/en-US/legal/not-allowed-licenses/)
-lists. If the license needs legal review, file a request on the Fedora legal
-mailing list before proceeding.
+Check the Fedora approved and not-allowed license lists. If legal review is
+needed, file a request on the Fedora legal mailing list before proceeding.
 
 ### SRPM build fails
 
-Common causes:
-- Missing Source/Patch file referenced in spec
-- Syntax error in spec (usually from manual edits)
-- `%prep` path references to directories that no longer exist in the new version
+Common causes: missing Source/Patch file, spec syntax error, `%prep` paths
+referencing directories that no longer exist in the new version.

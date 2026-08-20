@@ -28,12 +28,11 @@ and applied both during vendor tarball generation and during the RPM build.
   bundled `sqlite` to `sqlite-unbundled` for system libsqlite3 linkage. Does
   NOT touch `[package.metadata.cargo-machete]` sections — those are
   development-only and irrelevant to packaging.
-- `0003` — **pkcs8 downgrade**: Downgrades pkcs8 from 0.11.0 to 0.10.2 so
-  pkcs1 (0.7.5), pkcs8, and sec1 (0.7) all resolve against the same
-  spki/der/const-oid generation. Required when activating native-tls, which
-  pulls in all three.
-- `0004` — **aws-lc-rs feature gate**: Moves aws-lc-rs in rcgen behind the
-  rustls-tls feature flag so it is not pulled in when rustls-tls is absent.
+- `0002` — **aws-lc-rs feature gate**: Removes `aws_lc_rs` from the
+  workspace-level rustls default features in the root `Cargo.toml`, then adds
+  `rustls/aws_lc_rs` explicitly to the rustls-tls feature gate in
+  `crates/goose/Cargo.toml`, so aws-lc-sys is not pulled in on the native-tls
+  build path.
 
 > **Note:** Feature flags (native-tls, otel, telemetry, system-keyring,
 > disable-update) are **not** patched into Cargo.toml defaults. They are passed
@@ -42,6 +41,17 @@ and applied both during vendor tarball generation and during the RPM build.
 > (`cargo vendor-filterer`). This means the upstream default-features list is
 > NOT a maintenance concern for packaging — only the feature definitions
 > themselves need to survive rebases.
+>
+> Package scoping works the same way: do NOT patch `default-members` into the
+> workspace `Cargo.toml`. `%cargo_build`/`%cargo_test` pass
+> `-- --package goose-cli` instead (a literal `--` after the macro's own
+> `-n -f` flags, since `%cargo_build`/`%cargo_test` have no `-p` short option
+> and error with "Unknown option p" if you pass one directly — everything
+> after `--` goes straight to the underlying `cargo` invocation). This scopes
+> the build to `goose-cli` and its dependency tree. With `resolver = "2"`,
+> building the whole workspace in one invocation activates `--features` names
+> across every workspace member that defines them, which can leak forbidden
+> deps (e.g. `aws-lc-rs`) in from crates goose-cli doesn't even depend on.
 
 ### Code patches (0020-0099) — Rust source code changes
 
@@ -56,6 +66,11 @@ resolution and are NOT listed in the vendor tarball script.
 Applied from the source root (paths start with `vendor/`):
 
 - `0100` — Patch ring's build.rs to never use pre-generated object files
+- `0101` — Add `default-features = false` to hf-hub's reqwest dependency. hf-hub
+  is a workspace member dep (via goose-local-inference) that pulls reqwest without
+  disabling defaults, activating default-tls → rustls → aws_lc_rs on the
+  native-tls path. Check on each bump whether the upstream hf-hub release fixed
+  this; if so, drop the patch.
 
 ### RHEL-only patches (0800-0899) — Conditional on `%if 0%{?rhel}`
 
@@ -88,7 +103,7 @@ For each patch, determine:
 4. **No longer relevant** — If the upstream code changed so the patch target
    no longer exists, investigate and report to user
 
-## 3.3 Regenerate Dependency Patches (0001, 0003, 0004)
+## 3.3 Regenerate Dependency Patches (0001, 0002)
 
 These patches modify `Cargo.toml` files across the workspace. When upstream
 changes dependencies, they almost always need regenerating.
@@ -99,20 +114,20 @@ changes dependencies, they almost always need regenerating.
 2. For Patch 0001 (platform cleanup + system libraries): identify all
    Windows/macOS platform deps and `[patch.crates-io]` entries, remove them.
    Verify that sqlx still uses `sqlite-unbundled` (not `sqlite`). Do NOT
-   touch `[package.metadata.cargo-machete]` sections.
-3. For Patch 0003 (pkcs8 downgrade): check if the version conflict between
-   pkcs8, pkcs1, and sec1 still exists. If upstream resolved it (e.g., by
-   upgrading sec1/pkcs1 to a spki 0.8-compatible version), the patch can be
-   dropped. If not, apply the same downgrade to the new source.
-4. For Patch 0004 (aws-lc-rs feature gate): verify that aws-lc-rs is still
-   being pulled in transitively by rcgen even when rustls-tls is disabled. If
-   upstream fixed the feature gate, drop the patch.
-5. Generate each patch with `git diff` after committing the previous one.
+   touch `[package.metadata.cargo-machete]` sections, and do NOT add
+   `default-members` — package scoping is a build flag
+   (`-- --package goose-cli`), not a Cargo.toml patch.
+3. For Patch 0002 (aws-lc-rs feature gate): verify that the workspace-level
+   rustls dependency still hardcodes `aws_lc_rs` in its features list. If
+   upstream removed it (or moved it behind a feature flag), drop the patch. Also
+   check that `crates/goose/Cargo.toml`'s rustls-tls feature still needs the
+   explicit `rustls/aws_lc_rs` activation.
+4. Generate each patch with `git diff` after committing the previous one.
 
-**CRITICAL:** Patches 0001, 0003, and 0004 are listed in
-`generate-vendor-tarball.sh`'s `PATCHES` array because they affect
-`Cargo.toml`/`Cargo.lock` which changes what gets vendored. If these patches
-change, update the `PATCHES` array in that script too.
+**CRITICAL:** Any patch that modifies `Cargo.toml` or `Cargo.lock` must be
+listed in `generate-vendor-tarball.sh`'s `PATCHES` array because it affects
+what gets vendored. Currently that is 0001 and 0002. If patches are added,
+dropped, or renamed, update the `PATCHES` array too.
 
 **Do NOT add feature-flag changes back to these patches.** Feature selection
 (native-tls, otel, telemetry, system-keyring, disable-update) is handled
@@ -153,3 +168,9 @@ done
 
 Check if `ring` crate version changed — if so, the patch path in 0100
 (`vendor/ring-{VERSION}/build.rs`) needs updating.
+
+Check if `hf-hub` version changed — if so, the patch path in 0101
+(`vendor/hf-hub-{VERSION}/Cargo.toml`) needs updating. Also check whether
+the new hf-hub release added `default-features = false` to its reqwest dep
+upstream; if so, drop 0101 and remove the checksum-clearing block from the
+spec.

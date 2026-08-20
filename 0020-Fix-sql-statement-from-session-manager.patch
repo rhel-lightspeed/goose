@@ -4,23 +4,23 @@ Date: Tue, 21 Jul 2026 16:28:27 +0100
 Subject: [PATCH] Fix SQL statement from session manager
 
 ---
- crates/goose/src/session/session_manager.rs | 15 +++++++++++----
- 1 file changed, 11 insertions(+), 4 deletions(-)
+ crates/goose/src/session/session_manager.rs | 17 +++++++++++++----
+ 1 file changed, 13 insertions(+), 4 deletions(-)
 
 diff --git a/crates/goose/src/session/session_manager.rs b/crates/goose/src/session/session_manager.rs
 index 1abdf14..312b656 100644
 --- a/crates/goose/src/session/session_manager.rs
 +++ b/crates/goose/src/session/session_manager.rs
-@@ -1289,7 +1289,7 @@ impl SessionStorage {
+@@ -1573,7 +1573,7 @@
          let mut tx = pool.begin_with("BEGIN IMMEDIATE").await?;
- 
+
          let today = chrono::Utc::now().format("%Y%m%d").to_string();
 -        let session = sqlx::query_as(
 +        sqlx::query(
              r#"
                  INSERT INTO sessions (id, name, user_set_name, session_type, working_dir, extension_data, goose_mode)
                  VALUES (
-@@ -1305,8 +1305,7 @@ impl SessionStorage {
+@@ -1589,8 +1589,7 @@
                      '{}',
                      ?
                  )
@@ -30,14 +30,14 @@ index 1abdf14..312b656 100644
          )
              .bind(&today)
              .bind(&today)
-@@ -1314,9 +1313,17 @@ impl SessionStorage {
+@@ -1598,9 +1597,17 @@
              .bind(session_type.to_string())
              .bind(&*working_dir.to_string_lossy())
              .bind(goose_mode.to_string())
 -            .fetch_one(&mut *tx)
 +            .execute(&mut *tx)
              .await?;
- 
+
 +        let session: Session = sqlx::query_as(
 +            r#"
 +                SELECT * FROM sessions WHERE rowid = last_insert_rowid()
@@ -49,6 +49,15 @@ index 1abdf14..312b656 100644
          tx.commit().await?;
          #[cfg(feature = "telemetry")]
          crate::posthog::emit_session_started();
--- 
+@@ -1941,7 +1948,7 @@
+         let mut having_clauses = Vec::new();
+         let normalized_message_timestamp = normalized_message_timestamp_sql("m.created_timestamp");
+         let sort_timestamp_sql =
+-            format!("COALESCE(MAX({normalized_message_timestamp}), unixepoch(s.updated_at))");
++            format!("COALESCE(MAX({normalized_message_timestamp}), CAST(strftime('%s', s.updated_at) AS INTEGER))");
+         if let Some(types) = filters.types {
+             let placeholders = types.iter().map(|_| "?").collect::<Vec<_>>().join(", ");
+             where_clauses.push(format!("s.session_type IN ({})", placeholders));
+--
 2.43.0
 

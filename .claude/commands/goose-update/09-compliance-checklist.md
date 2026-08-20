@@ -27,12 +27,29 @@ Requires: All previous phases completed.
 All three call sites must carry identical flags. Upstream defaults include
 `rustls-tls` and `aws-providers`, which pull in forbidden content; they must
 be suppressed by `-n` (`--no-default-features`). The cargo-rpm-macros short
-options are `-n` (no-default-features) and `-f <list>` (features).
-- [ ] `%cargo_build` carries `-n -f "%{downstream_features}"`
-- [ ] `%cargo_test` carries `-n -f "%{downstream_features}"` (before the `-- --` separator)
-- [ ] `cargo vendor-filterer` in `generate-vendor-tarball.sh` carries the same flags
-- [ ] No `0002-Set-downstream-feature-flags.patch` (or similar) patching Cargo.toml
-  default features — feature selection belongs in the build invocation, not a patch
+options are `-n` (no-default-features) and `-f <list>` (features) — there is
+no `-p`/`--package` short option; a bare `-p` errors with `Unknown option p
+in cargo_build(naf:)`. A literal `--` after the macro's own flags passes
+everything following it through raw to the underlying `cargo` invocation,
+where `--package <pkg>` is a real cargo flag.
+`%cargo_build`/`%cargo_test` share these flags via `%{goose_cargo_flags}`
+(defined once near `%{downstream_features}`) instead of duplicating them at
+each call site.
+- [ ] `%global goose_cargo_flags` is defined as `-n -f "%{downstream_features}" -- --package goose-cli --ignore-rust-version`
+- [ ] `%cargo_build` carries `%{goose_cargo_flags}`
+- [ ] `%cargo_test` carries `%{goose_cargo_flags}` (before the second `-- ${skip-}` separator)
+- [ ] `cargo vendor-filterer` in `generate-vendor-tarball.sh` carries the same `-n -f` flags
+- [ ] No patch hardcoding feature selection into Cargo.toml default features
+  (e.g. a "Set-downstream-feature-flags" style patch) — feature selection
+  belongs in the build invocation, not a patch
+- [ ] No `default-members` patched into the workspace `Cargo.toml` — package
+  scoping belongs in `-- --package goose-cli` on the build invocation, not a
+  patch (resolver = "2" activates `--features` names across every workspace
+  member when no package is selected, which can leak forbidden deps like
+  `aws-lc-rs` from crates goose-cli doesn't even depend on)
+- [ ] Any comment mentioning a real macro name (e.g. `%cargo_build`) in prose
+  escapes it as `%%cargo_build` — RPM expands `%word` even inside `#`
+  comments, and an unescaped mention silently corrupts the generated script
 
 ## System Libraries
 (Only check crates still present after Phase 5.2.1 — skip any that were dropped)

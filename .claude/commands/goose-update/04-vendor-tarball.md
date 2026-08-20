@@ -13,9 +13,11 @@ Check the `PATCHES` array in `generate-vendor-tarball.sh`. It must list exactly
 the patches that modify `Cargo.toml` or `Cargo.lock` (affecting dependency
 resolution). Currently these are (verify against the actual file):
 
-- `0000-Patch-windows-dependencies-across-workspace.patch`
-- `0001-Disable-rustls-and-default-features-for-some-librari.patch`
+- `0001-Strip-non-Linux-deps-and-use-system-libraries.patch`
+- `0002-aws-lc-rs-feature-flag.patch`
 - CVE patches that update vendored crate versions (e.g., `0003-Fix-for-CVE-*`)
+- a pkcs8-downgrade patch if the pkcs8/pkcs1/sec1 conflict resurfaces (pick the
+  next free number in the 1-19 dependency-patch range)
 
 If patches were added, removed, or renamed in Phase 3, update this array.
 

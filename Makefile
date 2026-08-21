@@ -82,7 +82,3 @@ logs:
 .PHONY: clean
 clean:
 	rm -rf *.src.rpm *.tar.gz *.tar.xz *.crate vendor goose-*
-
-.PHONY: freeze
-freeze:
-	./scripts/freeze.py --python-versions 3.14

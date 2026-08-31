@@ -71,7 +71,7 @@ Source:         %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
 # To create the vendor tarball, use the generate-vendor-tarball.sh script:
 #   chmod +x generate-vendor-tarball.sh
 #   ./generate-vendor-tarball.sh
-Source1:        %{name}-%{version}-vendor.tar.xz
+Source1:        %{name}-%{version}-vendor.tar.zstd
 # This script is used to generate the vendor tarball for goose, and while it
 # does not offer any practical/real usage for the application, it helps us to
 # easily generate the vendored tarball and apply the correct patches while
@@ -120,6 +120,9 @@ Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
 # We have it placed in our directory due to the need of modifications depending
 # on the version bump from ring, otherwise, we should
 Patch0100:      0100-Downstream-only-never-use-pre-generated-object-files.patch
+# Enable the `pkg-config` feature in zstd-sys and zstd-safe so they link
+# against the system libzstd-devel instead of compiling from bundled sources.
+Patch0101:      0101-Downstream-only-enable-zstd-sys-pkg-config.patch
 
 ## RHEL only patches (800-899)
 # Patches in the 800-899 range are applied only to RHEL.
@@ -347,6 +350,12 @@ Provides:       bundled(syntect-theme-Solarized)
 # (src/dump.rs#L212) is included in the Spacegray theme.
 Provides:       bundled(sublime-theme-Spacegray)
 
+# BLAKE3 cryptographic hash function C/assembly implementation bundled in the
+# `blake3` crate. The upstream build.rs has no pkg-config hook to use the
+# system blake3-devel package, so the C sources are compiled at build time.
+# blake3: CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
+Provides:       bundled(blake3) = 1.8.5
+
 # Minified JavaScript libraries and minified CSS stylesheets contained in
 # `goose-mcp` crate for the autovisualizer tool.
 #   * crates/goose-mcp/src/autovisualizer/templates/assets/
@@ -371,6 +380,32 @@ Provides:       bundled(leaflet-markercluster-min-js) = 1.5.3
 # but since we were not able to identify it, better to be safe and not provide
 # any version here.
 Provides:       bundled(mermaid-min-js)
+
+# Tree-sitter parsing library and language grammars. The C sources are compiled
+# at build time from the vendored crates. System packages exist in Fedora for
+# most of these, but the upstream build.rs scripts have no pkg-config hook to
+# use them. tree-sitter-kotlin and tree-sitter-swift have no Fedora system
+# package at all.
+# tree-sitter: MIT
+Provides:       bundled(tree-sitter) = 0.26.10
+# tree-sitter-go: MIT
+Provides:       bundled(tree-sitter-go) = 0.25.0
+# tree-sitter-java: MIT
+Provides:       bundled(tree-sitter-java) = 0.23.5
+# tree-sitter-javascript: MIT
+Provides:       bundled(tree-sitter-javascript) = 0.25.0
+# tree-sitter-kotlin-ng: MIT (no Fedora system package available)
+Provides:       bundled(tree-sitter-kotlin) = 1.1.0
+# tree-sitter-python: MIT
+Provides:       bundled(tree-sitter-python) = 0.25.0
+# tree-sitter-ruby: MIT
+Provides:       bundled(tree-sitter-ruby) = 0.23.1
+# tree-sitter-rust: MIT
+Provides:       bundled(tree-sitter-rust) = 0.24.2
+# tree-sitter-swift: MIT (no Fedora system package available)
+Provides:       bundled(tree-sitter-swift) = 0.7.3
+# tree-sitter-typescript: MIT
+Provides:       bundled(tree-sitter-typescript) = 0.23.2
 
 %global _description %{expand:
 Goose is your on-machine AI agent, capable of automating complex development
@@ -436,54 +471,6 @@ rm -rf ui bin .claude .codex .cursor evals services oidc-proxy vendor/v8
 # (https://github.com/block/goose/pull/3688) does not mention anything about
 # the source of the image, it's better that we remove this anyway.
 rm crates/goose-cli/src/scenario_tests/test_data/test_image.jpg
-
-# Helper function to prune vendored folders that contains C libraries or
-# pre-defined objects. All pruned libraries here should be linked against
-# system libraries instead.
-#
-# Note: The operations `rm` and `find` in this helper function are split to
-# allow easier reading and maintenance, but they could be grouped together in
-# just one find command.
-prune_vendor() {
-    local crate_pattern="$1"
-    local path_to_remove="$2"
-
-    # We use ${var} without quotes here to allow the '*' glob to expand
-    rm -rf ${crate_pattern}/${path_to_remove}
-
-    # Patch the cargo checksum to ignore the deleted files
-    find . -path "*/${crate_pattern}/.cargo-checksum.json" \
-        -exec sed -i.uncheck -e 's/"files":{[^}]*}/"files":{ }/' '{}' '+'
-}
-
-pushd vendor
-
-prune_vendor "libdbus-sys-*" "vendor"
-prune_vendor "libsqlite3-sys-*" "{sqlite3,sqlcipher}"
-prune_vendor "onig_sys-*" "oniguruma"
-prune_vendor "ring-*" "pregenerated"
-
-# This expression will match:
-#   - zstd-* / zstd-*+zstd*
-#   - zstd-safe-* / zstd-safe*+zstd*
-#   - zstd-sys-*+zstd*
-# And will add the `pkg-config` to the default-features, and patch
-# .cargo-checksum.json to ignore the changed files.
-find . -maxdepth 1 -path "*/zstd-*" \
-    -exec sed -i '/^default = \[/s/\[/&"pkg-config", /' "{}/Cargo.toml" \; \
-    -exec sed -i.uncheck -e 's/"files":{[^}]*}/"files":{ }/' "{}/.cargo-checksum.json" \;
-
-# zstd-safe depends on zstd-sys with `default-features = false`, which
-# prevents the pkg-config default added above from taking effect. Explicitly
-# add the pkg-config feature to the dependency so that zstd-sys always links
-# against the system library instead of trying to build from bundled sources.
-sed -i '/\[dependencies\.zstd-sys\]/,/^$/{
-    /default-features = false/a\features = ["pkg-config"]
-}' zstd-safe-*/Cargo.toml
-
-prune_vendor "zstd-sys-*" "zstd"
-
-popd
 
 # Sometimes Rust sources start with #![...] attributes, and "smart" editors
 # think it's a shebang and make them executable. Then brp-mangle-shebangs gets

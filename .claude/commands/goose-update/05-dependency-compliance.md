@@ -19,7 +19,7 @@ are properly handled:
 | `ring` | Allowed but `pregenerated/` directory MUST be stripped and patch 0100 MUST be applied |
 
 From the extracted source directory with patches 0000-0002 applied and the
-vendor tarball extracted (`tar xf goose-{TARGET_VERSION}-vendor.tar.xz`):
+vendor tarball extracted (`tar xf goose-{TARGET_VERSION}-vendor.tar.zstd`):
 
 ```bash
 cargo tree -I rustls 2>/dev/null

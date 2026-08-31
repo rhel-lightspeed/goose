@@ -6,6 +6,7 @@ upstream_project_url: https://github.com/block/goose
 specfile_path: goose.spec
 
 srpm_build_deps:
+  - make
   - cargo
   - git
   - openssl-devel
@@ -14,14 +15,15 @@ actions:
   # The last step here is required by Packit to return the archive name
   # https://packit.dev/docs/configuration/actions#create-archive
   create-archive:
-    - bash -c "cargo install cargo-vendor-filterer@0.5.18"
-    - bash -c "./generate-vendor-tarball.sh"
-    - bash -c "ls -1 goose*.tar.xz"
+    # After https://github.com/coreos/cargo-vendor-filterer/pull/141 get's merged, we can go back to pull from the original source.
+    - bash -c "cargo install --git https://github.com/r0x0d/cargo-vendor-filterer --branch fix/versioned-dirs-exclude-crate-path"
+    - bash -c "VERBOSE=1 ./generate-vendor-tarball.sh"
+    - bash -c "ls -1 goose*.tar.zstd"
   # We fix the first source of the specfile because packit just understands
   # that Source should be our create-archive output. That's simply not right
   # and it's easier to just sed it out and fix in the fix-spec-file
   fix-spec-file:
-    - sed -Ei 's|^(Source:[[:space:]]+)goose-[0-9]+(\.[0-9]+)*-vendor\.tar\.xz|\1%{url}/archive/v%{version}/%{name}-%{version}.tar.gz|' goose.spec
+    - sed -Ei 's|^(Source:[[:space:]]+)goose-[0-9]+(\.[0-9]+)*-vendor\.tar\.zstd|\1%{url}/archive/v%{version}/%{name}-%{version}.tar.gz|' goose.spec
     # Update Release with Packit's generated value (includes PR/branch identifier).
     # For PR builds this produces e.g. 1.TIMESTAMP.prNN.N.gHASH
     # For main builds this produces e.g. 1.TIMESTAMP.main.N.gHASH

@@ -108,7 +108,7 @@ make logs
 Removes generated build artifacts from the repository root:
 
 - `*.src.rpm` -- source RPMs
-- `*.tar.gz`, `*.tar.xz` -- source tarballs
+- `*.tar.gz`, `*.tar.zstd` -- source tarballs
 - `*.crate` -- Rust crate archives
 - `vendor/` -- vendored dependencies directory
 - `goose-*` -- extracted source and vendor directories
@@ -134,7 +134,7 @@ make freeze
 | `DIST_GIT_CHECKOUT` | `../goose-fedora` | Path to the dist-git checkout used by `make import`. Override with `make import DIST_GIT_CHECKOUT=/path/to/checkout`. |
 | `SRPM` | Auto-detected | Resolves to the absolute path of the most recent `.src.rpm` in the repo root, or `MISSING` if none exists. |
 | `VERSION` | From spec | Extracted from `goose.spec` using `rpmspec`. |
-| `VENDOR_TARBALL` | `goose-$(VERSION)-vendor.tar.xz` | Name of the vendored crate tarball. |
+| `VENDOR_TARBALL` | `goose-$(VERSION)-vendor.tar.zstd` | Name of the vendored crate tarball. |
 
 ## Typical Workflow
 

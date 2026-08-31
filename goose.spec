@@ -77,6 +77,10 @@ Source1:        %{name}-%{version}-vendor.tar.xz
 # easily generate the vendored tarball and apply the correct patches while
 # doing so.
 Source99:       generate-vendor-tarball.sh
+# This adds the changelog information used during Fedora/EPEL/RHEL builds to
+# inform what has changed from version to version. It has no practical effect
+# other than just being here to facilitate `fedpkg/rhpkg import` in the downstream.
+Source100:      changelog
 
 ## Dependency patches (1-19)
 #

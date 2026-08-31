@@ -31,8 +31,38 @@
 # tarball contains exactly the crates needed to build this feature set.
 %global downstream_features native-tls,otel,telemetry,system-keyring,disable-update
 
+# Shared cargo flags for '%%cargo_build'/'%%cargo_test' (see %%build/%%check),
+# kept in one place so both call sites can't drift out of sync.
+#
+# -n -f "%%{downstream_features}": explicitly disable upstream defaults
+# (includes rustls-tls, aws-providers, tui, code-mode, and other features
+# incompatible with Fedora packaging guidelines) and activate only the
+# features needed for downstream packaging.
+#
+# -- --package goose-cli: scopes the build/test to the goose-cli package and
+# its dependency tree only. With resolver = "2", building the whole
+# workspace in one invocation activates any --features name across *every*
+# workspace member that defines it, not just the ones goose-cli actually
+# depends on; that let aws-lc-rs/aws-lc-sys leak into the build via unrelated
+# crates even though goose-cli never needs it. Scoping via a build flag
+# (rather than patching default-members into Cargo.toml) keeps this
+# controllable via build flags, which upstream also suggested and which is
+# easier to review/maintain across version bumps than a Cargo.toml patch.
+# '%%cargo_build'/'%%cargo_test's own getopt only recognizes -n/-a/-f, so a
+# bare '-p' errors ("Unknown option p"); everything after a literal '--' is
+# instead passed through raw to the underlying 'cargo build'/'cargo test'
+# invocation.
+#
+# --ignore-rust-version: goose 1.45.0 declares rust-version = "1.94.1", but
+# RHEL 9/10 and EPEL 9/10 currently ship an older Rust toolset (1.92.0) and
+# won't pick up 1.94 until ~Nov 2026. This skips cargo's pre-flight MSRV
+# check and attempts the build anyway; it only works if the code doesn't
+# actually rely on a post-1.92 compiler feature. EXPERIMENTAL — drop this
+# flag if a real build shows the older rustc genuinely can't compile it.
+%global goose_cargo_flags -n -f "%{downstream_features}" -- --package goose-cli --ignore-rust-version
+
 Name:           goose
-Version:        1.39.0
+Version:        1.45.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/block/goose
@@ -54,24 +84,25 @@ Source99:       generate-vendor-tarball.sh
 # keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
 # entries (v8, cudaforge). Remove keyring 'vendored' feature (use system dbus).
 # Switch sqlx from bundled 'sqlite' to 'sqlite-unbundled' to use system libsqlite3.
+# Remove 'nostr', 'aws-providers', and 'rustls-tls' from goose-cli default
+# features to prevent unwanted crates from leaking into the vendor tarball via
+# cargo vendor-filterer workspace-level resolution (resolver=2 does not propagate
+# --no-default-features to individual workspace members).
 # Feature flags (native-tls, otel, telemetry, system-keyring, disable-update) are
 # passed explicitly at build time via '%%cargo_build -n -f' and '%%cargo_test -n -f',
 # into Cargo.toml; see %build and %check.
 Patch1:         0001-Strip-non-Linux-deps-and-use-system-libraries.patch
-# Downgrade pkcs8 from 0.11.0 to 0.10.2 so that pkcs1 (0.7.5), pkcs8, and sec1
-# (0.7) all resolve against the same spki/der/const-oid generation. Upstream
-# defaults to rustls-tls and never activates these optional deps together;
-# native-tls activates all three, exposing a type mismatch between spki 0.7 and
-# 0.8.
-Patch3:         0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch
-# aws-lc-rs on rcgen is enabled, which pulls in aws-lc-rs even when rust-tls is
-# disabled. Put it in the feature list with rust-tls so it is properly disabled.
-Patch4:         0004-aws-lc-rs-feature-flag.patch
+# Remove aws_lc_rs from the workspace-level rustls default-features so it is
+# not pulled into the native-tls build path. Activate it explicitly only under
+# the rustls-tls feature flag in crates/goose/Cargo.toml.
+Patch2:         0002-aws-lc-rs-feature-flag.patch
 
 ## Code patches (20-99)
 #
-# Avoid the 'RETURNING' SQL statement which requires SQLite 3.35.0. EPEL 9 is
-# stuck on 3.34.1, so we split the INSERT + SELECT into two statements.
+# Avoid the 'RETURNING' SQL statement (requires SQLite 3.35.0) and the
+# 'unixepoch()' function (requires SQLite 3.38.0). EPEL 9 is stuck on
+# SQLite 3.34.1, so we split the INSERT + SELECT into two statements and
+# replace unixepoch() with CAST(strftime('%s', ...) AS INTEGER).
 Patch20:         0020-Fix-sql-statement-from-session-manager.patch
 # code-mode is not in the --features list passed at build time, so we update
 # the snapshot test so it passes without that feature. That's better than
@@ -125,12 +156,13 @@ Conflicts: golang-github-pressly-goose
 # CC-BY-4.0:
 #   - All documentation (excluding specifications)
 #
-# licensecheck will report that set of 6 licenses for the source archive.
+# CDLA-Permissive-2.0:
+#   - introduced by the opentelemetry-semantic-conventions crate
 #
-# CC0-1.0 (constant_time_eq):
-#   - This package was discussed over the legal ML, due to it being present in
-#     Fedora already, but having a SPDX license that is not allowed.
-#   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/262UHMIUTLU3IMEQCFJUIS4EJIMEIRCN/
+# MPL-2.0+:
+#   - introduced by the option-ext crate.
+
+# licensecheck will report that set of 6 licenses for the source archive.
 #
 # A couple of files present under `crates/goose-mcp` and `crates/goose-cli`
 # were discussed in the legal ML due to them not having a clear license or
@@ -139,8 +171,8 @@ Conflicts: golang-github-pressly-goose
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
 #
 #   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.39.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.39.0/crates/goose-cli/src/scenario_tests/recordings
+#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-mcp/src/computercontroller/tests/data
+#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the
@@ -153,7 +185,10 @@ Conflicts: golang-github-pressly-goose
 # Apache-2.0
 # Apache-2.0 AND ISC
 # Apache-2.0 OR BSL-1.0
+# Apache-2.0 OR BSL-1.0 OR MIT
+# Apache-2.0 OR ISC OR MIT
 # Apache-2.0 OR MIT
+# Apache-2.0 OR MIT OR Zlib
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 # BSD-2-Clause
 # BSD-2-Clause OR Apache-2.0 OR MIT
@@ -164,19 +199,23 @@ Conflicts: golang-github-pressly-goose
 # BSL-1.0
 # CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
 # CC0-1.0 OR MIT-0 OR Apache-2.0
+# CDLA-Permissive-2.0
 # ISC
+# ISC AND (Apache-2.0 OR ISC)
+# ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)
 # LGPL-3.0-or-later
 # MIT
 # MIT AND BSD-3-Clause
 # MIT OR Apache-2.0
-# MIT OR Apache-2.0 OR BSD-1-Clause
 # MIT OR Apache-2.0 OR LGPL-2.1-or-later
 # MIT OR Apache-2.0 OR Zlib
 # MIT OR Zlib OR Apache-2.0
 # MIT-0
 # MPL-2.0
+# MPL-2.0+
 # Unicode-3.0
 # Unlicense OR MIT
+# Unlicense OR MIT OR Apache-2.0 OR CC0-1.0
 # Zlib
 # Zlib OR Apache-2.0 OR MIT
 # bzip2-1.0.6
@@ -186,11 +225,15 @@ License:        %{shrink:
                 AND (Apache-2.0 AND ISC)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT)
-                AND (Apache-2.0 OR BSD-1-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-2-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-3-Clause)
                 AND (Apache-2.0 OR BSL-1.0)
+                AND (Apache-2.0 OR BSL-1.0 OR MIT)
+                AND (Apache-2.0 OR CC0-1.0 OR MIT OR Unlicense)
                 AND (Apache-2.0 OR CC0-1.0 OR MIT-0)
+                AND (Apache-2.0 OR ISC)
+                AND (Apache-2.0 OR ISC OR MIT)
+                AND (Apache-2.0 OR ISC OR MIT-0)
                 AND (Apache-2.0 OR LGPL-2.1-or-later OR MIT)
                 AND (Apache-2.0 OR MIT)
                 AND (Apache-2.0 OR MIT OR Zlib)
@@ -199,12 +242,14 @@ License:        %{shrink:
                 AND (BSD-3-Clause AND MIT)
                 AND (BSD-3-Clause OR MIT)
                 AND BSL-1.0
+                AND CDLA-Permissive-2.0
                 AND ISC
                 AND LGPL-3.0-or-later
                 AND MIT
                 AND (MIT OR Unlicense)
                 AND MIT-0
                 AND MPL-2.0
+                AND MPL-2.0+
                 AND Unicode-3.0
                 AND Zlib
                 AND bzip2-1.0.6
@@ -453,10 +498,8 @@ find -name '*.rs' -type f -perm /111 -exec chmod -v -x '{}' '+'
 # use pkg-config.
 export RUSTONIG_SYSTEM_LIBONIG=1
 
-# Explicitly disable upstream defaults (includes rustls-tls, aws-providers, tui,
-# code-mode, and other features incompatible with Fedora packaging guidelines)
-# and activate only the features needed for downstream packaging.
-%cargo_build -n -f "%{downstream_features}"
+# See the goose_cargo_flags definition above for what these flags do and why.
+%cargo_build %{goose_cargo_flags}
 
 # Generate man pages from clap CLI definitions
 export CARGO_MANIFEST_DIR="target/rpm"
@@ -468,7 +511,6 @@ target/rpm/generate_manpages
 
 %install
 install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}
-install -Dpm 0755 target/rpm/goosed -t %{buildroot}%{_bindir}
 
 # Install man pages
 install -d %{buildroot}%{_mandir}/man1
@@ -495,8 +537,11 @@ skip="${skip-} --skip plugins::tests::updates_git_backed_plugin"
 #   * Timing-sensitive test: races against run completion in slow build environments.
 skip="${skip-} --skip test_steer_session_adds_input_to_active_prompt"
 
-# Use the same feature set as %build.
-%cargo_test -n -f "%{downstream_features}" -- -- ${skip-}
+# See the goose_cargo_flags definition above for what these flags do and why.
+# The trailing `-- ${skip-}` here is cargo test's own separator for the
+# test-harness skip args (goose_cargo_flags already has its own `--` to get
+# --package/--ignore-rust-version past %%cargo_test's getopt parsing).
+%cargo_test %{goose_cargo_flags} -- ${skip-}
 %endif
 
 
@@ -516,7 +561,6 @@ skip="${skip-} --skip test_steer_session_adds_input_to_active_prompt"
 %license cargo-vendor.txt
 
 %{_bindir}/goose
-%{_bindir}/goosed
 %{_mandir}/man1/goose*.1*
 
 %changelog

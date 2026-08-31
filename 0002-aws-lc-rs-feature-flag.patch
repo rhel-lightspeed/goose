@@ -1,0 +1,42 @@
+From a8decec43c3d9e0cf4cf8e491d31528eedefc941 Mon Sep 17 00:00:00 2001
+From: thepetk <thepetk@gmail.com>
+Date: Tue, 11 Aug 2026 15:42:46 +0100
+Subject: [PATCH] Gate aws-lc-rs behind rustls-tls feature flag
+
+The workspace Cargo.toml hardcodes aws_lc_rs in the rustls dependency,
+which causes aws-lc-sys to be pulled into the native-tls build path.
+Remove it from the workspace default and activate it explicitly only
+when rustls-tls is selected.
+---
+ Cargo.toml              | 2 +-
+ crates/goose/Cargo.toml | 1 +
+ 2 files changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/Cargo.toml b/Cargo.toml
+index d506f96..001adfc 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -51,7 +51,7 @@ once_cell = { version = "1.21.3", default-features = false, features = ["std"] }
+ rand = "0.10.1"
+ regex = { version = "1.12.3", default-features = false, features = ["std"] }
+ reqwest = { version = "0.13.2", default-features = false, features = ["multipart", "form"] }
+-rustls = { version = "0.23.31", default-features = false, features = ["aws_lc_rs", "std"] }
++rustls = { version = "0.23.31", default-features = false, features = ["std"] }
+ schemars = { version = "1.0.2", default-features = false, features = ["std"] }
+ serde = { version = "1.0.228", default-features = false, features = ["derive", "std"] }
+ serde_json = { version = "1.0.145", default-features = false, features = ["std"] }
+diff --git a/crates/goose/Cargo.toml b/crates/goose/Cargo.toml
+index d9b439c..45e0ac7 100644
+--- a/crates/goose/Cargo.toml
++++ b/crates/goose/Cargo.toml
+@@ -48,6 +48,7 @@ rustls-tls = [
+     "dep:aws-lc-rs",
+     "axum-server/tls-rustls",
+     "rcgen/aws_lc_rs",
++    "rustls/aws_lc_rs",
+     "reqwest/rustls",
+     "rmcp/reqwest",
+     "smithy-transport-reqwest?/rustls",
+-- 
+2.43.0
+

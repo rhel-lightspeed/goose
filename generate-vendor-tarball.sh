@@ -7,8 +7,7 @@ set -euo pipefail
 # via --no-default-features --features passed to cargo vendor-filterer directly.
 PATCHES=(
     "0001-Strip-non-Linux-deps-and-use-system-libraries.patch"
-    "0003-Downgrade-pkcs8-to-0.10.2-for-native-tls-compat.patch"
-    "0004-aws-lc-rs-feature-flag.patch"
+    "0002-aws-lc-rs-feature-flag.patch"
 )
 
 check_required_tools() {

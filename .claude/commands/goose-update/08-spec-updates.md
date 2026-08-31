@@ -94,23 +94,61 @@ flags after every version update.
 native-tls,otel,telemetry,system-keyring,disable-update
 ```
 
-`%cargo_build` and `%cargo_test` use the cargo-rpm-macros short options:
-`-n` = `--no-default-features`, `-f <list>` = `--features <list>`.
+`%cargo_build` and `%cargo_test`'s own getopt only recognizes `-n`
+(`--no-default-features`) and `-f <list>` (`--features <list>`) — there is no
+`-p`/`--package` short option, and passing a bare `-p` errors with `Unknown
+option p in cargo_build(naf:)`. To scope the package, put a literal `--`
+after the macro's own flags; everything after that is passed through raw to
+the underlying `cargo build`/`cargo test` invocation, where `--package
+<pkg>` is a real cargo flag.
+
+`--package goose-cli` scopes the build/test to the `goose-cli` package and
+its dependency tree only. With `resolver = "2"`, building the whole
+workspace in one invocation activates any `--features` name across *every*
+workspace member that defines it, not just the ones `goose-cli` actually
+depends on — this let `aws-lc-rs`/`aws-lc-sys` leak into the build via
+unrelated crates. Do **not** fix this by patching `default-members` into the
+workspace `Cargo.toml` instead — keeping the scope controlled via build
+flags (rather than a Cargo.toml patch) is easier to review and re-derive
+across version bumps.
+
+`--ignore-rust-version` skips cargo's pre-flight MSRV check, since goose can
+declare a `rust-version` newer than what RHEL/EPEL's Rust Toolset currently
+ships. It only helps if the code doesn't actually use a post-toolset
+compiler feature — verify with a real build after every version bump, don't
+assume it's still needed/sufficient.
+
+Since both `%cargo_build` and `%cargo_test` need the exact same flags, they
+are stored once in `%{goose_cargo_flags}` (defined near the top of the spec,
+next to `%{downstream_features}`) instead of being duplicated at each call
+site, so they can't drift out of sync:
+
+```
+%global goose_cargo_flags -n -f "%{downstream_features}" -- --package goose-cli --ignore-rust-version
+```
+
+> **Escaping gotcha:** RPM expands `%word` patterns even inside `#` comment
+> lines, unless escaped as `%%`. A comment that mentions a real macro name in
+> prose (e.g. "`%cargo_build`'s own getopt...") gets treated as an actual
+> macro invocation, silently splicing garbage into the generated build
+> script. Always write `%%cargo_build`/`%%cargo_test`/etc. when referring to
+> them in comments — only the real invocation lines should use a bare `%`.
 
 ### 8.6.1 Spec `%build` section
 
-`%cargo_build` must carry both flags:
-
 ```
-%cargo_build -n -f "%{downstream_features}"
+%cargo_build %{goose_cargo_flags}
 ```
 
 ### 8.6.2 Spec `%check` section
 
-`%cargo_test` must carry the same flags (before the `-- --` separator):
+`%cargo_test` reuses the same flags, then appends its own `-- ${skip-}`
+separator for the test-harness skip args (`%{goose_cargo_flags}` already has
+its own `--` to get `--package`/`--ignore-rust-version` past the macro's
+getopt parsing):
 
 ```
-%cargo_test -n -f "%{downstream_features}" -- -- ${skip-}
+%cargo_test %{goose_cargo_flags} -- ${skip-}
 ```
 
 ### 8.6.3 `generate-vendor-tarball.sh`

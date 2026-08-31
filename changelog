@@ -1,3 +1,33 @@
+* Thu Aug 20 2026 thepetk <thepetk@gmail.com> - 1.45.0-1
+- Update to version 1.45.0
+- Security fix: arbitrary command execution in goose CLI via `goose review` (GHSA-r5pp-p5r8-466r)
+- /status slash command in CLI for session inspection
+- /model slash command for session model switching, with tab completion and provider switching
+- goose review local code review command
+- tui command on goose-cli with diff viewer
+- Hooks system for extensibility (PreToolUse denial, Stop hook context)
+- Global hints loading from ~/.agents/AGENTS.md
+- Structured summary output with template rendering for compaction
+- Configurable GOOSE_DOCS_ROOT for air-gapped docs access
+- Allow disabling built-in skills
+- Option to disable automatic update downloads
+- Track cache tokens and per-message usage/cost stats
+- Unified thinking effort control across providers; Opus 5 adaptive thinking support
+- Upgrade to rmcp 2.0
+- New providers: Together AI, EmpirioLabs, OrcaRouter, NEAR AI Cloud, Perplexity, Alibaba (Qwen via DashScope), Databricks AI Gateway, Scaleway, Vercel AI Gateway, xAI SuperGrok, iFlytek Spark/Astron MaaS, Fireworks AI, OllamaCloudProvider, Sakana AI
+- MLX support for local inference provider
+- Nushell terminal and completion support
+- Azure Entra ID bearer token auth via AZURE_OPENAI_AD_TOKEN
+- Accept string values for GOOSE_CONTEXT_LIMIT
+- Quarterly option for scheduler
+- Worktree-aware directory switcher
+- Restore dynamic model discovery and current Grok support
+- Update DeepSeek model names to v4 API
+- Gate rcgen aws_lc_rs feature behind rustls-tls
+- Fail closed on unverifiable update provenance
+- Bump nostr to 0.44.6 to clear RUSTSEC-2026-0216
+- Numerous provider, ACP, local-inference, and session-handling bug fixes
+
 * Thu Jun 25 2026 thepetk <thepetk@gmail.com> - 1.39.0-1
 - Update to version 1.39.0
 - /status slash command in CLI for session inspection

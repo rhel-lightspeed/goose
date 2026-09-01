@@ -158,7 +158,7 @@ Test vendor-targeting patches. These are applied from the source root (not
 inside `vendor/`), as their paths already start with `vendor/`:
 
 ```bash
-tar xf goose-{TARGET_VERSION}-vendor.tar.xz
+tar xf goose-{TARGET_VERSION}-vendor.tar.zstd
 for p in ../0100*.patch ../0101*.patch; do
   [ -f "$p" ] || continue
   echo "=== Testing: $p"

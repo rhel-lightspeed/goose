@@ -1,0 +1,68 @@
+--- a/vendor/zstd-sys-2.0.16+zstd.1.5.7/Cargo.toml
++++ b/vendor/zstd-sys-2.0.16+zstd.1.5.7/Cargo.toml
+@@ -60,6 +60,7 @@
+     "legacy",
+     "zdict_builder",
+     "bindgen",
++    "pkg-config",
+ ]
+ experimental = []
+ fat-lto = []
+--- a/vendor/zstd-safe-7.2.4/Cargo.toml
++++ b/vendor/zstd-safe-7.2.4/Cargo.toml
+@@ -53,6 +53,7 @@
+     "legacy",
+     "arrays",
+     "zdict_builder",
++    "pkg-config",
+ ]
+ doc-cfg = []
+ experimental = ["zstd-sys/experimental"]
+@@ -74,6 +75,7 @@
+ [dependencies.zstd-sys]
+ version = "2.0.15"
+ default-features = false
++features = ["pkg-config"]
+ 
+ [lints.rust]
+ non_upper_case_globals = "allow"
+--- a/vendor/zstd-0.13.3/Cargo.toml
++++ b/vendor/zstd-0.13.3/Cargo.toml
+@@ -59,6 +59,7 @@
+     "legacy",
+     "arrays",
+     "zdict_builder",
++    "pkg-config",
+ ]
+ doc-cfg = []
+ experimental = ["zstd-safe/experimental"]
+@@ -107,7 +108,7 @@
+ 
+ [dependencies.zstd-safe]
+ version = "7.1.0"
+-features = ["std"]
++features = ["std", "pkg-config"]
+ default-features = false
+ 
+ [dev-dependencies.clap]
+--- a/vendor/zstd-sys-2.0.16+zstd.1.5.7/.cargo-checksum.json
++++ b/vendor/zstd-sys-2.0.16+zstd.1.5.7/.cargo-checksum.json
+@@ -1 +1 @@
+-{"files":{".cargo_vcs_info.json":"2b91fc14fde629d0d98341452c86a6c31977cc47304bd1ee75d6f625b28be212","Cargo.lock":"85fb2349b4268171e55d9a86f43a3c8ff396b181bfe485095dd5a7b1019bf2e8","Cargo.toml":"3f400eeb43f176bc78c2ec01d56125c1ccfea814f7c7ff81199573bdbd8d1f1a","Cargo.toml.orig":"fca295894986f6d57d2f8028af670ae14c91e7fad755c88ea61f957d1a3bb983","LICENSE":"a77b7cfeaf911ed410ffbe76f0cb2b24ad8a4d94e7ead5727e914425c416cc63","LICENSE.Apache-2.0":"0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594","LICENSE.BSD-3-Clause":"48341f685c87304089aa099b23c386f8bacc519ef555aa7a13e239908907b3fd","LICENSE.Mit":"129e8edef29e9abcd2ebabe252f4ef1b1289cdca356bf0040284a2fbccfb96c8","Readme.md":"3b5dff115d0794d3f35bf4e659b3c1222707a57b815b653d435e1568961bb3c8","build.rs":"d92ade96b5f7c04496b1e928c564fcf52bb7d59439f56262407da77c5628458d","src/bindings_zdict.rs":"854ae9974fa83f349d85d6b0b8a773bf41031c028702c9592d4faf372d7b195d","src/bindings_zdict_experimental.rs":"5b9801f5c7535941c85403a68f03feafa4e646dd2ba76b7a0d9ef39a11c81c6c","src/bindings_zdict_std_experimental.rs":"b088a45fb69983496bfe18d4e6f41b5307ed4ba2d065c171d9cd3e1ef2e3bc38","src/bindings_zstd.rs":"881de08bd90cb6a5a8a638b3d3309bd695507615a0837fe9747f5847dccc517f","src/bindings_zstd_experimental.rs":"bb5a328a2a356827e218ae813c31ae99b8cf1f835eaf7f4e411906b341377d87","src/bindings_zstd_seekable.rs":"a5cee901761bf999beafd9ad01a37a3aa256068c5dd48354993b56f0b71d834b","src/bindings_zstd_std_experimental.rs":"b9ce5b3a80849b533f41ef2f66bfaed77664c9f17df00c6dfeafff9835f114d6","src/lib.rs":"0dd76822e3aea29658144b41d8570f549fd1b6de39de7785654c9608ddd117de","src/wasm_shim.rs":"e1ea4697d19046c6ae6925923b700d004189a915e63c96fa3d49ec77a8b9398e","wasm-shim/assert.h":"f488d6a6833bea179432815bf0508ab539ce128490ffcb32ef52a0840dc0955c","wasm-shim/stdio.h":"9e6db1c0204bb4eb840e9b7d648e60809d5cf5120f44b55821b97c3cfed5ef60","wasm-shim/stdlib.h":"d6b31e71d5b6c6daa598c2ae3f1c37c53fa0f8b7b8c1233293217938fcd05138","wasm-shim/string.h":"44fda640c2b5a0dc77dbedf8c22ae945fbe48d129b1fc95b152795e700cdb52a","wasm-shim/time.h":"ed26c6b339b555f2ee860a65f9fa6f1f33bafd10f6f939543ebadeae15e4c64d","zdict.h":"3e08fb2b6ba0b383af0d170a930949021e05743ac0c0957cd45ccc61ec7d0eac","zstd.h":"e8edf4c5ba6aa6bc44e681e8a4ada5b300a708d684788cad0e86c1446d67fcc1","zstd_seekable.h":"55c73e8d8141a897fce67603f13900c0655ed9c838a8f10bc2d26f588723624e"},"package":"91e19ebc2adc8f83e43039e79776e3fda8ca919132d68a1fed6a5faca2683748"}
+\ No newline at end of file
++{"files":{},"package":"91e19ebc2adc8f83e43039e79776e3fda8ca919132d68a1fed6a5faca2683748"}
+\ No newline at end of file
+--- a/vendor/zstd-safe-7.2.4/.cargo-checksum.json
++++ b/vendor/zstd-safe-7.2.4/.cargo-checksum.json
+@@ -1 +1 @@
+-{"$comment":"This file only protects against accidental modifications. It is not a security mechanism and does not protect against malicious changes.","files":{".cargo_vcs_info.json":"6cd045dc97de4190a4069381ac9c51d9e791667579c737a24f7724df740d772b","Cargo.lock":"41a2ade31d797bb10b56628570bcf3c972a1497a3f84922afde5000c4ff09d43","Cargo.toml":"5af4c418d6b293b6f1892fc7ba92b4586f96829abf133be1519818ea42dce159","Cargo.toml.orig":"ae762fb67f59ecc40075f26ebfa69e7a5a106bf5ac9223a2616307721b6344ad","LICENSE":"a77b7cfeaf911ed410ffbe76f0cb2b24ad8a4d94e7ead5727e914425c416cc63","LICENSE.Apache-2.0":"0d542e0c8804e39aa7f37eb00da5a762149dc682d7829451287e11b938e94594","LICENSE.Mit":"129e8edef29e9abcd2ebabe252f4ef1b1289cdca356bf0040284a2fbccfb96c8","Readme.md":"db2e504468fe11556528df4949f492a2a91377ba6a71967732a3e460b7ae4941","build.rs":"2342e59833e2ebca2980884d4f242a6bf1b0143037c212e05514626ad5213505","src/constants.rs":"1804193790b251ed2f87acb0da25a3bbda1def0e4c4f5bfa110963d61654b3c3","src/constants_experimental.rs":"3a878cfb0cfb8fdf900c0218122524701d7b79ccc1c21ee0cb1f4325e45c3fe1","src/constants_seekable.rs":"c4ccecf0b16946f930122ea5f7600d1239f804998897d62285f2f3a01162dd6c","src/lib.rs":"9540a20cd098c75cef3fe0fb0c90e96796959f24f80f655dc3c3d58037f1905e","src/seekable.rs":"c4bc04f2538f37944d7277b7b66096d6d24f3dd30b224d7115c653f1f50d6a84","src/tests.rs":"c25e20883c85f58e39abc04b92d3c6673e6f1d3888f3350663533962a0eb1512"},"package":"8f49c4d5f0abb602a93fb8736af2a4f4dd9512e36f7f570d66e65ff867ed3b9d"}
+\ No newline at end of file
++{"files":{},"package":"8f49c4d5f0abb602a93fb8736af2a4f4dd9512e36f7f570d66e65ff867ed3b9d"}
+\ No newline at end of file
+--- a/vendor/zstd-0.13.3/.cargo-checksum.json
++++ b/vendor/zstd-0.13.3/.cargo-checksum.json
+@@ -1 +1 @@
+-{"files":{".cargo_vcs_info.json":"d2dd0d2946099c9a35eedf1d77babd68222fbf6b190651e267a5223b92b14077",".gitmodules":"1fb176d2c75a0e7c776dbf4777cf3e9eb35374ee9451abcc9595f81460ab2499","Cargo.lock":"72ccba1943aba45706b1638a8b00b4ccfa6ca9b38a239ba4653e3280d1a60059","Cargo.toml":"e9a3c99022390d9434510c153154eec615556c34d43a3176ccec0d82eed5759c","Cargo.toml.orig":"65226b34fdddbc2357ca0000fc585cd5e47716c1fbbbac6ecd20615e06950882","LICENSE":"129e8edef29e9abcd2ebabe252f4ef1b1289cdca356bf0040284a2fbccfb96c8","Readme.md":"ab4ae2287e6bfedf4c325085f62390520aebab75249bae993ca941aae2ff72fd","assets/example.txt":"4cb7244eeb2a509161452d126ea8c5711a74f076dda956198004ea514ced62cd","examples/basic.rs":"bd55c00ad6b937422ebd1a20bd91c46886630f3ff5722008e2eee18bbff2528a","examples/benchmark.rs":"285130beddc75af22c7a6477caa540896880e0ad47f7ac8e3121e364d8b7b1e0","examples/stream.rs":"9aafc6f899a83930cd16a2ae9d6ace0f8e16e67e828be788748789aedad7c850","examples/train.rs":"13a72eb1759f86309f3e084263b247ccc23f686d483a57c862f69c79e87f2600","examples/zstd.rs":"7453f89ef07b4f3a7e20c756cbde395142706e3c57fcf89d060d0ba37c2c6558","examples/zstdcat.rs":"20d44a9c3a7c3380161ecd19ae6e7d929868926495fb6afbedfc74cf839eb5a7","rustfmt.toml":"fc86263cef689505484650b8d55855a48855e359d703eea529e65220b30a1663","src/bulk/compressor.rs":"6b9df87e1ebb965f3e5dd8a7e7d8fe8c11b784e954230b49ff0c38b2fc7c871c","src/bulk/decompressor.rs":"f74f4d625de86fe1bcf74baba2b0a36204f3d1e20b0472001ba1d42c953f9e61","src/bulk/mod.rs":"4d722d99ccdacda41eed8888e313dea0dd6108acd9d01367efc68996d2ec4365","src/bulk/tests.rs":"0f86c7ee7c966ac51cdce874c119f94953aefd00b743e1888d22c5713b7733fc","src/dict.rs":"a2c3c61bc85c7f3f41b0080ab5b226e21cc01fdffd79eff81aab5ebbb6b56807","src/lib.rs":"fb7a981f49066558fe6f734e47708777a988cdcff94bcaf67a4250480f14d005","src/stream/functions.rs":"268ea720e3bc7cb278488c31ce6f8d631e35158462444eca197bf38aaaad34b8","src/stream/mod.rs":"52dfa2a765ba07b69f351e8ca844a7b4804b9d9c9b18e254bf3c65756f9eeecd","src/stream/raw.rs":"a9ef3a34949d32e9528d7b43ad986479afb587f87e568fae4dc36be0fa2cfbe1","src/stream/read/mod.rs":"ea85dd0b9ef82ffd39e7a088f6d12f57ede0f4b1b30cccda110ffea89f683db2","src/stream/read/tests.rs":"ea2d469d7643000906552fb8c8211a5df27b2f8f128aaffdd5537e1aee3a9732","src/stream/tests.rs":"a15bda4e4606a4e2e80109cd97a3a02f4b8d61eb947d8570f19c7c1b5c7bbc03","src/stream/write/mod.rs":"88d97f4ebc32f9fa3822750ab512ff5a8f1d594ee3b3d0bbc9ff70457d704cba","src/stream/write/tests.rs":"a31d72a9f3f3aa91eeec13f3a63f160eeef6f25b788c456e18f40b8e9778f404","src/stream/zio/mod.rs":"db9ba321d5f0087aa733959fc7ddeba7e8c2fd09d33a9d8b950fa1cf2c4853c3","src/stream/zio/reader.rs":"7b04aa7e019f295b4856b59d1e45a519b74af09aff02ffa2c73e39559bcebac4","src/stream/zio/writer.rs":"d6a08f220e47d79aecb8dee0561255146c8dea19a36b0a925a09004c5efc0be4"},"package":"e91ee311a569c327171651566e07972200e76fcfe2242a4fa446149a3881c08a"}
+\ No newline at end of file
++{"files":{},"package":"e91ee311a569c327171651566e07972200e76fcfe2242a4fa446149a3881c08a"}
+\ No newline at end of file

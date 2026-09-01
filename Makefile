@@ -4,7 +4,7 @@ TOOL2RPM := rust2rpm
 FAS_USERNAME := $(shell copr whoami)
 DIST_GIT_CHECKOUT ?= ../goose-fedora
 VERSION := $(shell rpmspec -q --qf "%{VERSION}" goose.spec)
-VENDOR_TARBALL := goose-$(VERSION)-vendor.tar.xz
+VENDOR_TARBALL := goose-$(VERSION)-vendor.tar.zstd
 SRPM = $(shell srpm=$$(ls goose-$(VERSION)*.src.rpm 2>/dev/null | tail -n 1); if [ -f "$$srpm" ]; then echo $$(realpath "$$srpm"); else echo MISSING; fi)
 
 .PHONY: create-copr-repo
@@ -81,4 +81,4 @@ logs:
 
 .PHONY: clean
 clean:
-	rm -rf *.src.rpm *.tar.gz *.tar.xz *.crate vendor goose-*
+	rm -rf *.src.rpm *.tar.gz *.tar.zstd *.crate vendor goose-*

@@ -143,7 +143,4 @@ mv vendor.tar.zstd "../${NAME}-${VERSION}-vendor.tar.zstd"
 
 popd >/dev/null
 
-echo "[+] Cleaning up..."
-rm -rf "$GOOSE_SOURCE" "$GOOSE_SOURCE_TARBALL"
-
 echo "[++] All done!"

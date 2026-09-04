@@ -10,6 +10,8 @@ srpm_build_deps:
   - cargo
   - git
   - openssl-devel
+  - curl
+  - jq
 
 actions:
   # The last step here is required by Packit to return the archive name
@@ -23,7 +25,7 @@ actions:
   # that Source should be our create-archive output. That's simply not right
   # and it's easier to just sed it out and fix in the fix-spec-file
   fix-spec-file:
-    - sed -Ei 's|^(Source:[[:space:]]+)goose-[0-9]+(\.[0-9]+)*-vendor\.tar\.zstd|\1%{url}/archive/v%{version}/%{name}-%{version}.tar.gz|' goose.spec
+    - sed -Ei 's|^(Source:[[:space:]]+)goose-[0-9]+(\.[0-9]+)*-vendor\.tar\.zstd|\1%{url}/releases/download/v%{version}/%{name}-source-v%{version}.tar.gz|' goose.spec
     # Update Release with Packit's generated value (includes PR/branch identifier).
     # For PR builds this produces e.g. 1.TIMESTAMP.prNN.N.gHASH
     # For main builds this produces e.g. 1.TIMESTAMP.main.N.gHASH

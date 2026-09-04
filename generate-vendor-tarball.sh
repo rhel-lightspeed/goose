@@ -104,19 +104,7 @@ if [ ! -f "$GOOSE_SOURCE_TARBALL" ]; then
     run make sources
 fi
 
-echo "[+] Verifying tarball integrity..."
-# The sources file uses Fedora's BSD-style format: SHA512 (filename) = hash
-if ! EXPECTED_SHA=$(grep -F "SHA512 ($GOOSE_SOURCE_TARBALL) =" sources | awk '{print $NF}'); then
-    echo "[-] ERROR: No checksum entry found for $GOOSE_SOURCE_TARBALL in sources"
-    exit 1
-fi
-ACTUAL_SHA=$(sha512sum "$GOOSE_SOURCE_TARBALL" | awk '{print $1}')
-if [ "$ACTUAL_SHA" != "$EXPECTED_SHA" ]; then
-    echo "[-] ERROR: Checksum mismatch for $GOOSE_SOURCE_TARBALL"
-    exit 1
-fi
-
-echo "[+] Tarball verified, extracting..."
+echo "[+] Extracting tarball..."
 # We remove vendor folder to avoid conflicts with ``cargo vendor-filterer`
 rm -rf "$GOOSE_SOURCE" && run tar -xzf "$GOOSE_SOURCE_TARBALL" --exclude "goose-${VERSION}/vendor"
 

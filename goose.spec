@@ -65,9 +65,10 @@ Name:           goose
 Version:        1.45.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
-URL:            https://github.com/block/goose
+URL:            https://github.com/aaif-goose/goose
 
-Source:         %{url}/archive/v%{version}/%{name}-%{version}.tar.gz
+
+Source:         %{url}/releases/download/v%{version}/%{name}-source-v%{version}.tar.gz
 # To create the vendor tarball, use the generate-vendor-tarball.sh script:
 #   chmod +x generate-vendor-tarball.sh
 #   ./generate-vendor-tarball.sh
@@ -433,7 +434,9 @@ faster and focus on innovation.}
 
 # Break the patches into batches since
 # patches >= 800 are only applied on RHEL systems.
-%setup -q -a1
+# The release artifact extracts to goose-v%%{version}/ (note the 'v' prefix),
+# unlike the old auto-generated archive which used goose-%%{version}/.
+%setup -q -n %{name}-v%{version} -a1
 %autopatch -p1 -M 799
 
 %if 0%{?rhel}

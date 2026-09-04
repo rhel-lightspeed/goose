@@ -18,7 +18,7 @@ run() {
 check_required_tools() {
     # Ensure ~/.cargo/bin is in PATH (cargo install places binaries there)
     export PATH="${CARGO_HOME:-$HOME/.cargo}/bin:$PATH"
-    local tools=("make" "cargo" "rpmspec" "spectool" "tar" "patch")
+    local tools=("make" "cargo" "rpmspec" "spectool" "tar" "patch" "curl" "jq")
     local missing=()
 
     for tool in "${tools[@]}"; do
@@ -47,10 +47,11 @@ done < <(ls 000[0-9]-*.patch 001[0-9]-*.patch 2>/dev/null | sort)
 NAME=$(rpmspec -q --qf "%{NAME}" goose.spec)
 # Grab the version from the specfile
 VERSION=$(rpmspec -q --qf "%{VERSION}" goose.spec)
-# Folder for goose sources extracted from tarball
-GOOSE_SOURCE="$NAME-$VERSION"
-# Tarball for goose downloaded with spectool
-GOOSE_SOURCE_TARBALL="$GOOSE_SOURCE.tar.gz"
+# Folder for goose sources extracted from the release artifact tarball
+# (upstream uses goose-vVERSION/ as the directory prefix in release artifacts)
+GOOSE_SOURCE="$NAME-v$VERSION"
+# Tarball for goose downloaded with spectool (release artifact naming)
+GOOSE_SOURCE_TARBALL="$NAME-source-v$VERSION.tar.gz"
 
 # Target platforms matching Fedora/EPEL/RHEL build architectures
 PLATFORMS=(
@@ -104,9 +105,38 @@ if [ ! -f "$GOOSE_SOURCE_TARBALL" ]; then
     run make sources
 fi
 
-echo "[+] Extracting tarball..."
+echo "[+] Verifying tarball integrity against GitHub release digest..."
+# Since goose >= 1.45.0, upstream publishes immutable source archives as GitHub
+# release artifacts with a sha256 digest. We fetch the digest from the GitHub
+# Releases API and verify the downloaded tarball against it. This protects
+# against tag-force-move attacks on the upstream repository.
+# See: https://redhat.atlassian.net/browse/RSPEED-3446
+GITHUB_API_URL="https://api.github.com/repos/aaif-goose/goose/releases/tags/v${VERSION}"
+JQ_FILTER=".assets[] | select(.name == \"${GOOSE_SOURCE_TARBALL}\") | .digest"
+EXPECTED_SHA256=$(
+    curl -sfL "$GITHUB_API_URL" \
+        | jq -r "$JQ_FILTER" \
+        | sed 's/^sha256://'
+) || true
+
+if [ -z "$EXPECTED_SHA256" ]; then
+    echo "[-] ERROR: Could not retrieve SHA256 digest for $GOOSE_SOURCE_TARBALL from GitHub release v${VERSION}"
+    echo "[-]        Verify the release exists and contains the source artifact."
+    exit 1
+fi
+
+ACTUAL_SHA256=$(sha256sum "$GOOSE_SOURCE_TARBALL" | awk '{print $1}')
+if [ "$ACTUAL_SHA256" != "$EXPECTED_SHA256" ]; then
+    echo "[-] ERROR: SHA256 checksum mismatch for $GOOSE_SOURCE_TARBALL"
+    echo "[-]   Expected: $EXPECTED_SHA256"
+    echo "[-]   Actual:   $ACTUAL_SHA256"
+    exit 1
+fi
+echo "[+] SHA256 verified: $ACTUAL_SHA256"
+
+echo "[+] Tarball verified, extracting..."
 # We remove vendor folder to avoid conflicts with ``cargo vendor-filterer`
-rm -rf "$GOOSE_SOURCE" && run tar -xzf "$GOOSE_SOURCE_TARBALL" --exclude "goose-${VERSION}/vendor"
+rm -rf "$GOOSE_SOURCE" && run tar -xzf "$GOOSE_SOURCE_TARBALL" --exclude "${GOOSE_SOURCE}/vendor"
 
 echo "[+] Applying patches..."
 pushd "$GOOSE_SOURCE" >/dev/null

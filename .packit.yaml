@@ -17,8 +17,7 @@ actions:
   # The last step here is required by Packit to return the archive name
   # https://packit.dev/docs/configuration/actions#create-archive
   create-archive:
-    # After https://github.com/coreos/cargo-vendor-filterer/pull/141 get's merged, we can go back to pull from the original source.
-    - bash -c "cargo install --git https://github.com/r0x0d/cargo-vendor-filterer --branch fix/versioned-dirs-exclude-crate-path"
+    - bash -c "cargo install cargo-vendor-filterer"
     - bash -c "VERBOSE=1 ./generate-vendor-tarball.sh"
     - bash -c "ls -1 goose*.tar.zstd"
   # We fix the first source of the specfile because packit just understands

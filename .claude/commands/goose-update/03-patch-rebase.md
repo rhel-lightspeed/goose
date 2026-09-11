@@ -66,11 +66,10 @@ resolution and are NOT listed in the vendor tarball script.
 Applied from the source root (paths start with `vendor/`):
 
 - `0100` — Patch ring's build.rs to never use pre-generated object files
-- `0101` — Add `default-features = false` to hf-hub's reqwest dependency. hf-hub
-  is a workspace member dep (via goose-local-inference) that pulls reqwest without
-  disabling defaults, activating default-tls → rustls → aws_lc_rs on the
-  native-tls path. Check on each bump whether the upstream hf-hub release fixed
-  this; if so, drop the patch.
+- `0101` — Enable the `pkg-config` feature in `zstd-sys`, `zstd-safe`, and `zstd`
+  so they link against system `libzstd-devel` instead of compiling from bundled
+  sources. Check on each bump whether upstream zstd-sys now includes `pkg-config`
+  in its default features; if so, drop the patch.
 
 ### RHEL-only patches (0800-0899) — Conditional on `%if 0%{?rhel}`
 
@@ -166,11 +165,39 @@ for p in ../0100*.patch ../0101*.patch; do
 done
 ```
 
-Check if `ring` crate version changed — if so, the patch path in 0100
-(`vendor/ring-{VERSION}/build.rs`) needs updating.
+Check if `ring` crate version changed — if so:
+- Update the patch path in 0100 (`vendor/ring-{VERSION}/build.rs`)
+- Update `%global ring_ver` in `goose.spec`
+- Update the `jq` command path in `%prep` (it uses `%{ring_ver}`)
 
-Check if `hf-hub` version changed — if so, the patch path in 0101
-(`vendor/hf-hub-{VERSION}/Cargo.toml`) needs updating. Also check whether
-the new hf-hub release added `default-features = false` to its reqwest dep
-upstream; if so, drop 0101 and remove the checksum-clearing block from the
-spec.
+Check if any of the `zstd-sys`, `zstd-safe`, or `zstd` crate versions changed —
+if so:
+- Update patch paths in 0101 accordingly
+- Update `%global zstd_sys_ver`, `%global zstd_safe_ver`, `%global zstd_ver`
+  in `goose.spec`
+- Update the `jq` command paths in `%prep`
+
+Check whether upstream `zstd-sys` now includes `pkg-config` in its default
+features; if so, drop 0101 entirely and remove the three `jq` commands for
+zstd crates from `%prep` and their `%global` macros from the spec.
+
+**`.cargo-checksum.json` handling — important convention:**
+Do NOT include `.cargo-checksum.json` hunks in any vendor patch. The exact
+content of these files varies depending on which `cargo-vendor-filterer`
+version generated the vendor tarball (Packit CI uses a custom fork that
+modifies checksums when excluding crate subdirectories). Since patches use
+`--fuzz=0`, any content mismatch causes a hard failure in `%prep`.
+
+Instead, for each vendored crate whose files a patch modifies, add a `jq`
+command in `%prep` (after `%autopatch -p1 -M 799`) to zero out the `files`
+dict unconditionally:
+
+```bash
+jq -c '.files = {}' vendor/{crate}-{ver}/.cargo-checksum.json \
+    > vendor/{crate}-{ver}/.cargo-checksum.json.tmp \
+    && mv vendor/{crate}-{ver}/.cargo-checksum.json.tmp \
+       vendor/{crate}-{ver}/.cargo-checksum.json
+```
+
+Add a corresponding `%global {crate}_ver {version}` macro near the top of
+the spec so the version appears in one place.

@@ -14,6 +14,63 @@ run() {
     fi
 }
 
+# Get a crate's version from Cargo.lock (first match).
+crate_version() {
+    local name="$1"
+    awk -v name="$name" '
+        /^\[\[package\]\]/ { pkg_name = ""; pkg_ver = "" }
+        /^name = /         { gsub(/"/, ""); pkg_name = $3 }
+        /^version = /      { gsub(/"/, ""); pkg_ver = $3 }
+        pkg_name == name && pkg_ver != "" { print pkg_ver; exit }
+    ' Cargo.lock
+}
+
+# Build versioned --exclude-crate-path entries from Cargo.lock.
+# Must be called from inside the extracted source directory (where Cargo.lock lives).
+build_crate_paths() {
+    local ring_ver;    ring_ver=$(crate_version "ring")
+    local onig_ver;    onig_ver=$(crate_version "onig_sys")
+    local dbus_ver;    dbus_ver=$(crate_version "libdbus-sys")
+    local sqlite_ver;  sqlite_ver=$(crate_version "libsqlite3-sys")
+    local zstd_ver;    zstd_ver=$(crate_version "zstd-sys")
+    local awslc_ver;   awslc_ver=$(crate_version "aws-lc-sys")
+    local llama_ver;   llama_ver=$(crate_version "llama-cpp-sys-2")
+    local secp_ver;    secp_ver=$(crate_version "secp256k1-sys")
+    local ttf_ver;     ttf_ver=$(crate_version "ttf-parser")
+    local vcpkg_ver;   vcpkg_ver=$(crate_version "vcpkg")
+
+    CRATE_PATHS=(
+        # Strip test directories from all crates (CI fixtures, not needed at build time)
+        "*#tests"
+        # onig_sys: bundled oniguruma C library (use system oniguruma-devel instead)
+        "onig_sys-${onig_ver}#oniguruma"
+        # libdbus-sys: bundled D-Bus C library (use system dbus-devel instead)
+        "libdbus-sys-${dbus_ver}#vendor"
+        # libsqlite3-sys: bundled SQLite C library (use system sqlite3-devel instead)
+        "libsqlite3-sys-${sqlite_ver}#sqlite3"
+        # libsqlite3-sys: bundled SQLCipher C library (use system sqlite3-devel instead)
+        "libsqlite3-sys-${sqlite_ver}#sqlcipher"
+        # ring: pre-generated platform object files (forbidden prebuilt binaries)
+        "ring-${ring_ver}#pregenerated"
+        # zstd-sys: bundled zstd C library (use system libzstd-devel instead)
+        "zstd-sys-${zstd_ver}#zstd"
+        # aws-lc-sys: bundled aws-lc C library (BoringSSL fork; forbidden, use system)
+        "aws-lc-sys-${awslc_ver}#aws-lc"
+        # aws-lc-sys: 26 pre-compiled Windows COFF .obj files (forbidden prebuilt binaries)
+        "aws-lc-sys-${awslc_ver}#builder/prebuilt-nasm"
+        # aws-lc-sys: pre-generated BoringSSL symbol prefix headers (~1.4 MB generated)
+        "aws-lc-sys-${awslc_ver}#generated-include"
+        # llama-cpp-sys-2: entire bundled llama.cpp + ggml + CUDA/Vulkan sources
+        "llama-cpp-sys-2-${llama_ver}#llama.cpp"
+        # secp256k1-sys: bundled libsecp256k1 C library (defensive; normally stripped by platform filtering)
+        "secp256k1-sys-${secp_ver}#depend"
+        # ttf-parser: Qt C++ developer tool shipped upstream, never compiled by cargo
+        "ttf-parser-${ttf_ver}#testing-tools"
+        # vcpkg: 341 zero-byte .dll/.lib/.a placeholder files used only for parser tests
+        "vcpkg-${vcpkg_ver}#test-data"
+    )
+}
+
 # Helper function to find out if the required tools are present.
 check_required_tools() {
     # Ensure ~/.cargo/bin is in PATH (cargo install places binaries there)
@@ -61,39 +118,6 @@ PLATFORMS=(
     powerpc64le-unknown-linux-gnu
 )
 
-# Paths excluded from the vendor tarball. Each entry removes content that is
-# either a bundled C/C++ library, pre-built binary, or test/tool data that is
-# forbidden or unnecessary in a Fedora source package.
-CRATE_PATHS=(
-    # Strip test directories from all crates (CI fixtures, not needed at build time)
-    "*#tests"
-    # onig_sys: bundled oniguruma C library (use system oniguruma-devel instead)
-    "onig_sys#oniguruma"
-    # libdbus-sys: bundled D-Bus C library (use system dbus-devel instead)
-    "libdbus-sys#vendor"
-    # libsqlite3-sys: bundled SQLite C library (use system sqlite3-devel instead)
-    "libsqlite3-sys#sqlite3"
-    # libsqlite3-sys: bundled SQLCipher C library (use system sqlite3-devel instead)
-    "libsqlite3-sys#sqlcipher"
-    # ring: pre-generated platform object files (forbidden prebuilt binaries)
-    "ring#pregenerated"
-    # zstd-sys: bundled zstd C library (use system libzstd-devel instead)
-    "zstd-sys#zstd"
-    # aws-lc-sys: bundled aws-lc C library (BoringSSL fork; forbidden, use system)
-    "aws-lc-sys#aws-lc"
-    # aws-lc-sys: 26 pre-compiled Windows COFF .obj files (forbidden prebuilt binaries)
-    "aws-lc-sys#builder/prebuilt-nasm"
-    # aws-lc-sys: pre-generated BoringSSL symbol prefix headers (~1.4 MB generated)
-    "aws-lc-sys#generated-include"
-    # llama-cpp-sys-2: entire bundled llama.cpp + ggml + CUDA/Vulkan sources
-    "llama-cpp-sys-2#llama.cpp"
-    # secp256k1-sys: bundled libsecp256k1 C library (defensive; normally stripped by platform filtering)
-    "secp256k1-sys#depend"
-    # ttf-parser: Qt C++ developer tool shipped upstream, never compiled by cargo
-    "ttf-parser#testing-tools"
-    # vcpkg: 341 zero-byte .dll/.lib/.a placeholder files used only for parser tests
-    "vcpkg#test-data"
-)
 
 # Features read directly from the spec's downstream_features global so this
 # script and the RPM build can never drift out of sync.
@@ -146,6 +170,8 @@ for patch in "${PATCHES[@]}"; do
 done
 
 echo "[+] Generating vendor folder (Linux-only via cargo-vendor-filterer)..."
+build_crate_paths
+
 PLATFORM_ARGS=()
 for platform in "${PLATFORMS[@]}"; do
     PLATFORM_ARGS+=("--platform=$platform")

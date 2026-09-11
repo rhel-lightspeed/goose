@@ -80,8 +80,16 @@ Check if these workarounds in `%prep` are still needed:
    Also verify that no dependency in the chain disables defaults — see Phase
    5.2.3 for the full check.
 
-3. **Cargo checksum clearing**: Any `prune_vendor` or sed workaround that
-   modifies vendored crate files must also patch `.cargo-checksum.json`.
+3. **Cargo checksum clearing**: When a vendor patch modifies files inside a
+   crate (e.g. `Cargo.toml`, `build.rs`), do NOT include a
+   `.cargo-checksum.json` hunk in the patch. The checksum file's content
+   varies between local and CI-generated vendor tarballs (Packit uses a
+   custom `cargo-vendor-filterer` fork that modifies checksums when excluding
+   crate subdirectories), so a hardcoded hunk will fail with `--fuzz=0`.
+   Instead, add a `jq -c '.files = {}'` command in `%prep` for that crate
+   and a `%global {crate}_ver` macro in the spec. See the existing `ring_ver`,
+   `zstd_sys_ver`, `zstd_safe_ver`, and `zstd_ver` macros as the pattern to
+   follow.
 
 ## 8.6 Build-Time Feature Flags
 

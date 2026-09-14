@@ -30,10 +30,6 @@
 # Must match the --features argument in generate-vendor-tarball.sh so the vendor
 # tarball contains exactly the crates needed to build this feature set.
 %global downstream_features native-tls,otel,telemetry,system-keyring,disable-update
-%global ring_ver 0.17.14
-%global zstd_sys_ver 2.0.16+zstd.1.5.7
-%global zstd_safe_ver 7.2.4
-%global zstd_ver 0.13.3
 
 # Shared cargo flags for '%%cargo_build'/'%%cargo_test' (see %%build/%%check),
 # kept in one place so both call sites can't drift out of sync.
@@ -449,14 +445,15 @@ faster and focus on innovation.}
 # patch .cargo-checksum.json reliably because its content varies depending on
 # which cargo-vendor-filterer version/fork generated the vendor tarball.
 # Zero out the files dict here so Cargo skips per-file verification entirely.
-jq -c '.files = {}' vendor/ring-%{ring_ver}/.cargo-checksum.json > vendor/ring-%{ring_ver}/.cargo-checksum.json.tmp \
-    && mv vendor/ring-%{ring_ver}/.cargo-checksum.json.tmp vendor/ring-%{ring_ver}/.cargo-checksum.json
-jq -c '.files = {}' vendor/zstd-sys-%{zstd_sys_ver}/.cargo-checksum.json > vendor/zstd-sys-%{zstd_sys_ver}/.cargo-checksum.json.tmp \
-    && mv vendor/zstd-sys-%{zstd_sys_ver}/.cargo-checksum.json.tmp vendor/zstd-sys-%{zstd_sys_ver}/.cargo-checksum.json
-jq -c '.files = {}' vendor/zstd-safe-%{zstd_safe_ver}/.cargo-checksum.json > vendor/zstd-safe-%{zstd_safe_ver}/.cargo-checksum.json.tmp \
-    && mv vendor/zstd-safe-%{zstd_safe_ver}/.cargo-checksum.json.tmp vendor/zstd-safe-%{zstd_safe_ver}/.cargo-checksum.json
-jq -c '.files = {}' vendor/zstd-%{zstd_ver}/.cargo-checksum.json > vendor/zstd-%{zstd_ver}/.cargo-checksum.json.tmp \
-    && mv vendor/zstd-%{zstd_ver}/.cargo-checksum.json.tmp vendor/zstd-%{zstd_ver}/.cargo-checksum.json
+for crate in ring zstd-sys zstd-safe zstd; do
+    checksum_file="$(find vendor/${crate}-*/.cargo-checksum.json 2> /dev/null | tail -n 1)"
+    if [ -z "$checksum_file" ]; then
+        echo "Expected at least one checksum file for ${crate}."
+        exit 1
+    fi
+    jq -c '.files = {}' "$checksum_file" > "${checksum_file}.tmp" \
+        && mv "${checksum_file}.tmp" "$checksum_file"
+done
 
 %if 0%{?rhel}
 %autopatch -p1 -m 800 -M 899

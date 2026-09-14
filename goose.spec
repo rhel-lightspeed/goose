@@ -446,7 +446,7 @@ faster and focus on innovation.}
 # which cargo-vendor-filterer version/fork generated the vendor tarball.
 # Zero out the files dict here so Cargo skips per-file verification entirely.
 for crate in ring zstd-sys zstd-safe zstd; do
-    checksum_file="$(find vendor/${crate}-*/.cargo-checksum.json 2> /dev/null | tail -n 1)"
+    checksum_file="$(find vendor -maxdepth 2 -path "vendor/${crate}-[0-9]*" -type f -name .cargo-checksum.json 2> /dev/null | tail -n 1)"
     if [ -z "$checksum_file" ]; then
         echo "Expected at least one checksum file for ${crate}."
         exit 1

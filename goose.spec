@@ -281,6 +281,9 @@ BuildRequires:  /usr/bin/perl
 BuildRequires:  libzstd-devel
 # Required in %%prep to zero out .cargo-checksum.json files dict after patching
 BuildRequires:  jq
+%if 0%{?fedora}
+BuildRequires:  fdupes
+%endif
 
 # Sublime Text 3 language definitions for syntax highlighting
 # from: https://github.com/sublimehq/Packages/tree/fa6b862
@@ -525,6 +528,10 @@ install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}
 # Install man pages
 install -d %{buildroot}%{_mandir}/man1
 install -pm 0644 target/man/*.1 -t %{buildroot}%{_mandir}/man1
+
+%if 0%{?fedora}
+%fdupes %{buildroot}%{_prefix}/src/debug
+%endif
 
 %if %{with check}
 %check

@@ -128,6 +128,16 @@ Patch0100:      0100-Downstream-only-never-use-pre-generated-object-files.patch
 # Enable the `pkg-config` feature in zstd-sys and zstd-safe so they link
 # against the system libzstd-devel instead of compiling from bundled sources.
 Patch0101:      0101-Downstream-only-enable-zstd-sys-pkg-config.patch
+# Replace the hardcoded cipher list in the vendored openssl crate's
+# SslConnector::builder() with PROFILE=SYSTEM so that outbound TLS connections
+# respect the system crypto policy on Fedora/RHEL.  Without this, rpmlint
+# reports crypto-policy-non-compliance-openssl on the goose binary.
+# The equivalent change is applied upstream in the Fedora rust-openssl package:
+#   https://src.fedoraproject.org/rpms/rust-openssl/blob/rawhide/f/0001-set-PROFILE-SYSTEM-as-default-cipher-list.patch
+# The Fedora system openssl library intercepts the exact string PROFILE=SYSTEM
+# in SSL_CTX_set_cipher_list and redirects it to the system policy file:
+#   https://src.fedoraproject.org/rpms/openssl/blob/rawhide/f/0005-RH-Add-support-for-PROFILE-SYSTEM-system-default-cip.patch
+Patch0102:      0102-Downstream-only-use-system-crypto-policy-in-openssl.patch
 
 ## RHEL only patches (800-899)
 # Patches in the 800-899 range are applied only to RHEL.
@@ -445,7 +455,7 @@ faster and focus on innovation.}
 # patch .cargo-checksum.json reliably because its content varies depending on
 # which cargo-vendor-filterer version/fork generated the vendor tarball.
 # Zero out the files dict here so Cargo skips per-file verification entirely.
-for crate in ring zstd-sys zstd-safe zstd; do
+for crate in ring zstd-sys zstd-safe zstd openssl; do
     checksum_file="$(find vendor -maxdepth 2 -path "vendor/${crate}-[0-9]*" -type f -name .cargo-checksum.json 2> /dev/null | tail -n 1)"
     if [ -z "$checksum_file" ]; then
         echo "Expected at least one checksum file for ${crate}."

@@ -281,6 +281,11 @@ BuildRequires:  /usr/bin/perl
 BuildRequires:  libzstd-devel
 # Required in %%prep to zero out .cargo-checksum.json files dict after patching
 BuildRequires:  jq
+# fdupes is used to deduplicate debug source files but is not available in base
+# RHEL repositories (only in EPEL), so it is restricted to Fedora builds only
+%if ! 0%{?rhel}
+BuildRequires:  fdupes
+%endif
 
 # Sublime Text 3 language definitions for syntax highlighting
 # from: https://github.com/sublimehq/Packages/tree/fa6b862
@@ -525,6 +530,12 @@ install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}
 # Install man pages
 install -d %{buildroot}%{_mandir}/man1
 install -pm 0644 target/man/*.1 -t %{buildroot}%{_mandir}/man1
+
+# fdupes is used to deduplicate debug source files but is not available in base
+# RHEL repositories (only in EPEL), so it is restricted to Fedora builds only
+%if ! 0%{?rhel}
+%fdupes %{buildroot}%{_prefix}/src/debug
+%endif
 
 %if %{with check}
 %check

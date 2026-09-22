@@ -31,13 +31,16 @@
 # tarball contains exactly the crates needed to build this feature set.
 %global downstream_features native-tls,otel,telemetry,system-keyring,disable-update
 
-# Shared cargo flags for '%%cargo_build'/'%%cargo_test' (see %%build/%%check),
-# kept in one place so both call sites can't drift out of sync.
+# Holds the default/shared flags used across different cargo commands.
 #
 # -n -f "%%{downstream_features}": explicitly disable upstream defaults
 # (includes rustls-tls, aws-providers, tui, code-mode, and other features
 # incompatible with Fedora packaging guidelines) and activate only the
 # features needed for downstream packaging.
+%global default_cargo_flags -n -f "%{downstream_features}"
+
+# Shared cargo flags for '%%cargo_build'/'%%cargo_test' (see %%build/%%check),
+# kept in one place so both call sites can't drift out of sync.
 #
 # -- --package goose-cli: scopes the build/test to the goose-cli package and
 # its dependency tree only. With resolver = "2", building the whole
@@ -59,14 +62,13 @@
 # check and attempts the build anyway; it only works if the code doesn't
 # actually rely on a post-1.92 compiler feature. EXPERIMENTAL — drop this
 # flag if a real build shows the older rustc genuinely can't compile it.
-%global goose_cargo_flags -n -f "%{downstream_features}" -- --package goose-cli --ignore-rust-version
+%global goose_cargo_flags %{default_cargo_flags} -- --package goose-cli --ignore-rust-version
 
 Name:           goose
 Version:        1.45.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/aaif-goose/goose
-
 
 Source:         %{url}/releases/download/v%{version}/%{name}-source-v%{version}.tar.gz
 # To create the vendor tarball, use the generate-vendor-tarball.sh script:
@@ -521,8 +523,9 @@ export CARGO_MANIFEST_DIR="target/rpm"
 target/rpm/generate_manpages
 
 %cargo_vendor_manifest
-%{cargo_license_summary}
-%{cargo_license} > LICENSE.dependencies
+
+%{cargo_license_summary} %{default_cargo_flags}
+%{cargo_license} %{default_cargo_flags} > LICENSE.dependencies
 
 %install
 install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}

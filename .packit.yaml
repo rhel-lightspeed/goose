@@ -35,8 +35,10 @@ actions:
 
 _:
   pr_targets: &pr_targets
+    # NOTE: Fedora 43 is set to be retired in Dec 6th.
     fedora-43-x86_64: {}
     fedora-44-x86_64: {}
+    fedora-45-x86_64: {}
     fedora-rawhide-x86_64: {}
     epel-9-x86_64: {}
     epel-10-x86_64: {}
@@ -52,6 +54,10 @@ _:
     fedora-44-aarch64: {}
     fedora-44-ppc64le: {}
     fedora-44-s390x: {}
+
+    fedora-45-aarch64: {}
+    fedora-45-ppc64le: {}
+    fedora-45-s390x: {}
 
     fedora-rawhide-aarch64: {}
     fedora-rawhide-ppc64le: {}
@@ -131,12 +137,15 @@ jobs:
     tmt_plan: "/plans"
     targets:
       <<: *rhel_x86_64_targets
-      fedora-44-x86_64:
-        distros:
-          - Fedora-44
       fedora-43-x86_64:
         distros:
           - Fedora-43
+      fedora-44-x86_64:
+        distros:
+          - Fedora-44
+      fedora-45-x86_64:
+        distros:
+          - Fedora-45
       fedora-rawhide-x86_64:
         distros:
           - Fedora-Rawhide

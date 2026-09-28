@@ -169,9 +169,6 @@ Conflicts: golang-github-pressly-goose
 # CDLA-Permissive-2.0:
 #   - introduced by the opentelemetry-semantic-conventions crate
 #
-# MPL-2.0+:
-#   - introduced by the option-ext crate.
-
 # licensecheck will report that set of 6 licenses for the source archive.
 #
 # A couple of files present under `crates/goose-mcp` and `crates/goose-cli`
@@ -187,7 +184,6 @@ Conflicts: golang-github-pressly-goose
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the
 # output of %%{cargo_license_summary}.
-
 #
 # (Apache-2.0 OR MIT) AND BSD-3-Clause
 # (MIT OR Apache-2.0) AND Unicode-3.0
@@ -198,7 +194,6 @@ Conflicts: golang-github-pressly-goose
 # Apache-2.0 OR BSL-1.0 OR MIT
 # Apache-2.0 OR ISC OR MIT
 # Apache-2.0 OR MIT
-# Apache-2.0 OR MIT OR Zlib
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 # BSD-2-Clause
 # BSD-2-Clause OR Apache-2.0 OR MIT
@@ -217,12 +212,12 @@ Conflicts: golang-github-pressly-goose
 # MIT
 # MIT AND BSD-3-Clause
 # MIT OR Apache-2.0
+# MIT OR Apache-2.0 OR BSD-1-Clause
 # MIT OR Apache-2.0 OR LGPL-2.1-or-later
 # MIT OR Apache-2.0 OR Zlib
 # MIT OR Zlib OR Apache-2.0
 # MIT-0
 # MPL-2.0
-# MPL-2.0+
 # Unicode-3.0
 # Unlicense OR MIT
 # Unlicense OR MIT OR Apache-2.0 OR CC0-1.0
@@ -235,6 +230,7 @@ License:        %{shrink:
                 AND (Apache-2.0 AND ISC)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT)
+                AND (Apache-2.0 OR BSD-1-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-2-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-3-Clause)
                 AND (Apache-2.0 OR BSL-1.0)
@@ -259,7 +255,6 @@ License:        %{shrink:
                 AND (MIT OR Unlicense)
                 AND MIT-0
                 AND MPL-2.0
-                AND MPL-2.0+
                 AND Unicode-3.0
                 AND Zlib
                 AND bzip2-1.0.6

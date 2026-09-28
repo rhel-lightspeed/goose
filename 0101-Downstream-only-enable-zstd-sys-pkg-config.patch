@@ -1,47 +1,50 @@
---- a/vendor/zstd-sys-2.0.16+zstd.1.5.7/Cargo.toml
-+++ b/vendor/zstd-sys-2.0.16+zstd.1.5.7/Cargo.toml
-@@ -60,6 +60,7 @@
+From 081c1edba4a4fd95d9af900892e087aa8185a3d9 Mon Sep 17 00:00:00 2001
+From: Rodolfo Olivieri <rolivier@redhat.com>
+Date: Mon, 28 Sep 2026 11:10:00 -0300
+Subject: [PATCH] Downstream only: enable zstd-sys pkg-config
+
+---
+ vendor/zstd-0.14.0/Cargo.toml               | 1 +
+ vendor/zstd-safe-8.0.0/Cargo.toml           | 1 +
+ vendor/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml | 1 +
+ 3 files changed, 3 insertions(+)
+
+diff --git a/vendor/zstd-0.14.0/Cargo.toml b/vendor/zstd-0.14.0/Cargo.toml
+index e12edcd..00103c3 100644
+--- a/vendor/zstd-0.14.0/Cargo.toml
++++ b/vendor/zstd-0.14.0/Cargo.toml
+@@ -58,6 +58,7 @@ cmake = ["zstd-safe/cmake"]
+ debug = ["zstd-safe/debug"]
+ default = [
      "legacy",
-     "zdict_builder",
-     "bindgen",
 +    "pkg-config",
+     "arrays",
+     "zdict_builder",
+ ]
+diff --git a/vendor/zstd-safe-8.0.0/Cargo.toml b/vendor/zstd-safe-8.0.0/Cargo.toml
+index 201ca95..2a1a178 100644
+--- a/vendor/zstd-safe-8.0.0/Cargo.toml
++++ b/vendor/zstd-safe-8.0.0/Cargo.toml
+@@ -52,6 +52,7 @@ cmake = ["zstd-sys/cmake"]
+ debug = ["zstd-sys/debug"]
+ default = [
+     "legacy",
++    "pkg-config",
+     "arrays",
+     "zdict_builder",
+ ]
+diff --git a/vendor/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml b/vendor/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml
+index fe65b8a..792c832 100644
+--- a/vendor/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml
++++ b/vendor/zstd-sys-2.1.0+zstd.1.5.7/Cargo.toml
+@@ -65,6 +65,7 @@ cmake = ["dep:cmake"]
+ debug = []
+ default = [
+     "legacy",
++    "pkg-config",
+     "zdict_builder",
  ]
  experimental = []
- fat-lto = []
---- a/vendor/zstd-safe-7.2.4/Cargo.toml
-+++ b/vendor/zstd-safe-7.2.4/Cargo.toml
-@@ -53,6 +53,7 @@
-     "legacy",
-     "arrays",
-     "zdict_builder",
-+    "pkg-config",
- ]
- doc-cfg = []
- experimental = ["zstd-sys/experimental"]
-@@ -74,6 +75,7 @@
- [dependencies.zstd-sys]
- version = "2.0.15"
- default-features = false
-+features = ["pkg-config"]
- 
- [lints.rust]
- non_upper_case_globals = "allow"
---- a/vendor/zstd-0.13.3/Cargo.toml
-+++ b/vendor/zstd-0.13.3/Cargo.toml
-@@ -59,6 +59,7 @@
-     "legacy",
-     "arrays",
-     "zdict_builder",
-+    "pkg-config",
- ]
- doc-cfg = []
- experimental = ["zstd-safe/experimental"]
-@@ -107,7 +108,7 @@
- 
- [dependencies.zstd-safe]
- version = "7.1.0"
--features = ["std"]
-+features = ["std", "pkg-config"]
- default-features = false
- 
- [dev-dependencies.clap]
+-- 
+2.55.0
+

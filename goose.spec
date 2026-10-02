@@ -56,7 +56,7 @@
 # instead passed through raw to the underlying 'cargo build'/'cargo test'
 # invocation.
 #
-# --ignore-rust-version: goose 1.45.0 declares rust-version = "1.94.1", but
+# --ignore-rust-version: goose 1.52.0 declares rust-version = "1.94.1", but
 # RHEL 9/10 and EPEL 9/10 currently ship an older Rust toolset (1.92.0) and
 # won't pick up 1.94 until ~Nov 2026. This skips cargo's pre-flight MSRV
 # check and attempts the build anyway; it only works if the code doesn't
@@ -65,7 +65,7 @@
 %global goose_cargo_flags %{default_cargo_flags} -- --package goose-cli --ignore-rust-version
 
 Name:           goose
-Version:        1.45.0
+Version:        1.52.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/aaif-goose/goose
@@ -111,11 +111,6 @@ Patch2:         0002-aws-lc-rs-feature-flag.patch
 # SQLite 3.34.1, so we split the INSERT + SELECT into two statements and
 # replace unixepoch() with CAST(strftime('%s', ...) AS INTEGER).
 Patch20:         0020-Fix-sql-statement-from-session-manager.patch
-# code-mode is not in the --features list passed at build time, so we update
-# the snapshot test so it passes without that feature. That's better than
-# skipping the test entirely.
-Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
-
 ## Downstream only patches (100-799)
 #
 # Patch the `build.rs` for `ring` crate to avoid using the pre-generated object
@@ -188,8 +183,8 @@ Conflicts: golang-github-pressly-goose
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
 #
 #   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-cli/src/scenario_tests/recordings
+#   	- https://github.com/block/goose/tree/v1.52.0/crates/goose-mcp/src/computercontroller/tests/data
+#   	- https://github.com/block/goose/tree/v1.52.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the
@@ -197,13 +192,14 @@ Conflicts: golang-github-pressly-goose
 #
 # (Apache-2.0 OR MIT) AND BSD-3-Clause
 # (MIT OR Apache-2.0) AND Unicode-3.0
+# 0BSD OR Apache-2.0
 # 0BSD OR MIT OR Apache-2.0
 # Apache-2.0
-# Apache-2.0 AND ISC
 # Apache-2.0 OR BSL-1.0
 # Apache-2.0 OR BSL-1.0 OR MIT
 # Apache-2.0 OR ISC OR MIT
 # Apache-2.0 OR MIT
+# Apache-2.0 OR MIT OR Zlib
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
 # BSD-2-Clause
 # BSD-2-Clause OR Apache-2.0 OR MIT
@@ -211,6 +207,7 @@ Conflicts: golang-github-pressly-goose
 # BSD-3-Clause AND MIT
 # BSD-3-Clause OR Apache-2.0
 # BSD-3-Clause OR MIT
+# BSD-3-Clause OR MIT OR Apache-2.0
 # BSL-1.0
 # CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
 # CC0-1.0 OR MIT-0 OR Apache-2.0
@@ -228,14 +225,18 @@ Conflicts: golang-github-pressly-goose
 # MIT OR Zlib OR Apache-2.0
 # MIT-0
 # MPL-2.0
+# MPL-2.0+
 # Unicode-3.0
+# Unlicense
 # Unlicense OR MIT
 # Unlicense OR MIT OR Apache-2.0 OR CC0-1.0
 # Zlib
 # Zlib OR Apache-2.0 OR MIT
+# Zlib OR MIT OR Apache-2.0
 # bzip2-1.0.6
 License:        %{shrink:
-                (0BSD OR Apache-2.0 OR MIT)
+                (0BSD OR Apache-2.0)
+                AND (0BSD OR Apache-2.0 OR MIT)
                 AND Apache-2.0
                 AND (Apache-2.0 AND ISC)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
@@ -243,6 +244,7 @@ License:        %{shrink:
                 AND (Apache-2.0 OR BSD-1-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-2-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-3-Clause)
+                AND (Apache-2.0 OR BSD-3-Clause OR MIT)
                 AND (Apache-2.0 OR BSL-1.0)
                 AND (Apache-2.0 OR BSL-1.0 OR MIT)
                 AND (Apache-2.0 OR CC0-1.0 OR MIT OR Unlicense)
@@ -258,6 +260,7 @@ License:        %{shrink:
                 AND (BSD-3-Clause AND MIT)
                 AND (BSD-3-Clause OR MIT)
                 AND BSL-1.0
+                AND bzip2-1.0.6
                 AND CDLA-Permissive-2.0
                 AND ISC
                 AND LGPL-3.0-or-later
@@ -266,8 +269,8 @@ License:        %{shrink:
                 AND MIT-0
                 AND MPL-2.0
                 AND Unicode-3.0
+                AND Unlicense
                 AND Zlib
-                AND bzip2-1.0.6
                 }
 # LICENSE.dependencies contains a full license breakdown
 
@@ -288,6 +291,9 @@ BuildRequires:  /usr/bin/perl
 BuildRequires:  libzstd-devel
 # Required in %%prep to zero out .cargo-checksum.json files dict after patching
 BuildRequires:  jq
+# Used as part of `commands::review::handler::tests::untracked_enumeration_stays_in_opened_root_after_swap` test.
+BuildRequires:  git
+
 # fdupes is used to deduplicate debug source files but is not available in base
 # RHEL repositories (only in EPEL), so it is restricted to Fedora builds only
 %if ! 0%{?rhel}
@@ -373,7 +379,7 @@ Provides:       bundled(sublime-theme-Spacegray)
 # `blake3` crate. The upstream build.rs has no pkg-config hook to use the
 # system blake3-devel package, so the C sources are compiled at build time.
 # blake3: CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
-Provides:       bundled(blake3) = 1.8.5
+Provides:       bundled(blake3) = 1.8.7
 
 # Minified JavaScript libraries and minified CSS stylesheets contained in
 # `goose-mcp` crate for the autovisualizer tool.
@@ -406,7 +412,7 @@ Provides:       bundled(mermaid-min-js)
 # use them. tree-sitter-kotlin and tree-sitter-swift have no Fedora system
 # package at all.
 # tree-sitter: MIT
-Provides:       bundled(tree-sitter) = 0.26.10
+Provides:       bundled(tree-sitter) = 0.26.13
 # tree-sitter-go: MIT
 Provides:       bundled(tree-sitter-go) = 0.25.0
 # tree-sitter-java: MIT

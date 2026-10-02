@@ -1,3 +1,58 @@
+* Tue Sep 23 2026 Rodolfo Olivieri <rolivier@redhat.com> - 1.52.0-1
+- Update to version 1.52.0
+- Unrolled agent loop with state machine architecture
+- Cache-safe request assembly with append-only turn context
+- Streaming shell output while commands run
+- on_failure block for PreToolUse hooks
+- /new command to start a fresh session without restarting
+- --edit session flag to edit conversation before forking
+- --with-extension can now name its extension
+- Opt-in terminal bell when a turn finishes or approval is needed
+- Load extensions in the background so the CLI prompt is immediately usable
+- Interactive menu for single select elicitations
+- Cancel elicitation on incomplete CLI input
+- Web-search and browser-use built-in skills
+- Skills follow working directory updates
+- Recipe parameter limits enforcement (max 32 params, 200 select options)
+- Let recipe settings outrank GOOSE_SUBAGENT_MODEL/PROVIDER
+- Validate recipe parameter values
+- MCP preferred version selection and HTTP retries
+- Split extension transports out of ExtensionManager
+- Support pre-registered OAuth clients for streamable_http extensions
+- Upgrade to rmcp 3.0 and ACP SDK
+- Per-message usage/cost tracking with derived session totals
+- Custom provider cost fields for cost tracking
+- Handle context length exceeded errors including byte-size limits
+- Set strict:false on chat-completions tools
+- Preserved-thinking compliance for Anthropic provider layer
+- OpenRouter session_id forwarding and app category header
+- Databricks Unity Catalog model services discovery
+- Decisions provider crate with OpenRouter and Jev implementations
+- Z.AI Coding Plan provider with streaming tool calls
+- OpenAI provider custom base URL support in SDK
+- New providers: TrustedRouter, OpenCode Zen, Gondola, SayGM, Lynkr, PleumRouter, Opper, EUrouter
+- Support for Opus 5.5, GPT-6 Astra/sol/luna, and GLM-5.3 models
+- AIML API integration
+- ACP session/new supports Hidden session
+- Tool calling for goose-agent
+- Title sessions by subject, not workflow step
+- GenAI semantic convention attributes for OTEL
+- Proactive OAuth token refresh to avoid re-auth on every session
+- Enforce secure token transport in OAuth
+- Protect custom provider configuration files
+- Restrict session storage permissions
+- Require HTTPS for Snowflake connections
+- Bound local image reads and XLSX range reads
+- Avoid O(n squared) cloning during session load
+- Keep subagent prompt prefix cacheable
+- Collapse const-union enums in tool schemas
+- Markdown format option to session export
+- Remove planning mode from the CLI
+- Remove fast model routing
+- Recover malformed tool calls from GLM/Minimax models
+- Honor Retry-After on 429 responses
+- Update SQLite to 3.51.3
+
 * Thu Aug 20 2026 thepetk <thepetk@gmail.com> - 1.45.0-1
 - Update to version 1.45.0
 - Security fix: arbitrary command execution in goose CLI via `goose review` (GHSA-r5pp-p5r8-466r)

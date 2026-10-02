@@ -1,15 +1,8 @@
-From 84d0aff05ba57a67171ec322de10049a623d72ae Mon Sep 17 00:00:00 2001
+From a3f8b5f2f3e3cedbf77adf5b492cf14fa8cb4067 Mon Sep 17 00:00:00 2001
 From: Rodolfo Olivieri <rolivier@redhat.com>
-Date: Fri, 24 Apr 2026 10:17:55 -0300
-Subject: [PATCH 6/6] Include legal message for goose proxy provider
+Date: Mon, 28 Sep 2026 11:08:28 -0300
+Subject: [PATCH] Include legal message for goose proxy provider
 
-Display legal disclaimers when the configured provider is the Red Hat
-proxy (rhel_cla). A startup disclaimer warns about AI usage and data
-handling, and a post-response reminder asks users to review
-AI-generated content.
-
-The disclaimer logic lives in a dedicated legal module so both
-interactive sessions and headless term runs can use it.
 ---
  crates/goose-cli/src/cli.rs           |  2 ++
  crates/goose-cli/src/commands/term.rs |  3 +++
@@ -20,13 +13,13 @@ interactive sessions and headless term runs can use it.
  create mode 100644 crates/goose-cli/src/legal.rs
 
 diff --git a/crates/goose-cli/src/cli.rs b/crates/goose-cli/src/cli.rs
-index babe728c6..96081c0d3 100644
+index 068446a..b1b6315 100644
 --- a/crates/goose-cli/src/cli.rs
 +++ b/crates/goose-cli/src/cli.rs
-@@ -1397,7 +1397,9 @@ async fn handle_run_command(
+@@ -2325,7 +2325,9 @@ async fn handle_run_command(
              "Headless session started"
          );
-
+ 
 +        crate::legal::display_disclaimer();
          let result = session.headless(contents).await;
 +        crate::legal::display_always_disclaimer();
@@ -34,7 +27,7 @@ index babe728c6..96081c0d3 100644
          result
      } else {
 diff --git a/crates/goose-cli/src/commands/term.rs b/crates/goose-cli/src/commands/term.rs
-index dd539d5..f65b3fd 100644
+index 9246042..a0b9d08 100644
 --- a/crates/goose-cli/src/commands/term.rs
 +++ b/crates/goose-cli/src/commands/term.rs
 @@ -5,6 +5,7 @@ use goose::conversation::message::{Message, MessageContent, MessageMetadata};
@@ -45,7 +38,7 @@ index dd539d5..f65b3fd 100644
  use crate::session::{build_session, SessionBuilderConfig};
  
  use clap::ValueEnum;
-@@ -260,7 +261,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
+@@ -322,7 +323,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
      };
  
      let mut session = build_session(config).await;
@@ -94,37 +87,37 @@ index 0000000..4f63937
 +    }
 +}
 diff --git a/crates/goose-cli/src/lib.rs b/crates/goose-cli/src/lib.rs
-index be821a2..48610c7 100644
+index d6c810e..79f4c9b 100644
 --- a/crates/goose-cli/src/lib.rs
 +++ b/crates/goose-cli/src/lib.rs
-@@ -6,6 +6,7 @@ compile_error!("Features `rustls-tls` and `native-tls` are mutually exclusive");
+@@ -8,6 +8,7 @@ compile_error!("Features `rustls-tls` and `native-tls` are mutually exclusive");
  
  pub mod cli;
  pub mod commands;
 +pub mod legal;
  pub mod logging;
- pub mod project_tracker;
  pub mod recipes;
+ pub mod scenario_tests;
 diff --git a/crates/goose-cli/src/session/mod.rs b/crates/goose-cli/src/session/mod.rs
-index 4deb36a..62f0a2f 100644
+index bf2f154..3da91a1 100644
 --- a/crates/goose-cli/src/session/mod.rs
 +++ b/crates/goose-cli/src/session/mod.rs
-@@ -512,6 +512,7 @@ impl CliSession {
+@@ -606,6 +606,7 @@ impl CliSession {
          let history_manager = HistoryManager::new();
          history_manager.load(&mut editor);
  
 +        crate::legal::display_disclaimer();
          loop {
-             self.display_context_usage().await?;
+             if self
+                 .extension_loading
+@@ -799,6 +800,7 @@ impl CliSession {
+         let elapsed = start_time.elapsed();
+         let elapsed_str = format_elapsed_time(elapsed);
+         println!("{}", console::style(format!("  ⏱ {}", elapsed_str)).dim());
++        crate::legal::display_always_disclaimer();
+         Ok(())
+     }
  
-@@ -712,6 +713,7 @@ impl CliSession {
-                 let elapsed = start_time.elapsed();
-                 let elapsed_str = format_elapsed_time(elapsed);
-                 println!("{}", console::style(format!("  ⏱ {}", elapsed_str)).dim());
-+                crate::legal::display_always_disclaimer();
-             }
-             RunMode::Plan => {
-                 let mut plan_messages = self.messages.clone();
---
-2.54.0
+-- 
+2.55.0
 

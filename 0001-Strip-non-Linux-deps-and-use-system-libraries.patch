@@ -1,17 +1,18 @@
-From 4f95874cf13aa0deff0561979b84c34202fd77ea Mon Sep 17 00:00:00 2001
-From: thepetk <thepetk@gmail.com>
-Date: Tue, 11 Aug 2026 14:40:58 +0100
+From d1d64ba7d05d24440c248cf5d66dede55fc58c64 Mon Sep 17 00:00:00 2001
+From: Rodolfo Olivieri <rolivier@redhat.com>
+Date: Mon, 28 Sep 2026 11:08:28 -0300
 Subject: [PATCH] Strip non-Linux deps and use system libraries
 
 ---
- Cargo.toml                              |  9 +--------
- crates/goose-cli/Cargo.toml             | 12 ------------
- crates/goose-local-inference/Cargo.toml |  3 ---
- crates/goose/Cargo.toml                 | 12 +-----------
- 4 files changed, 2 insertions(+), 34 deletions(-)
+ Cargo.toml                              |  8 +-------
+ crates/goose-cli/Cargo.toml             | 15 ---------------
+ crates/goose-local-inference/Cargo.toml |  6 ------
+ crates/goose-providers/Cargo.toml       |  1 -
+ crates/goose/Cargo.toml                 | 14 +-------------
+ 5 files changed, 2 insertions(+), 42 deletions(-)
 
 diff --git a/Cargo.toml b/Cargo.toml
-index d506f96..899f723 100644
+index a92524d..f255dbf 100644
 --- a/Cargo.toml
 +++ b/Cargo.toml
 @@ -1,8 +1,6 @@
@@ -22,45 +23,45 @@ index d506f96..899f723 100644
 -    "vendor/v8",
  ]
  resolver = "2"
-
-@@ -45,7 +43,7 @@ http = { version = "1.1", default-features = false, features = ["std"] }
- ignore = { version = "0.4.12", default-features = false }
- include_dir = { version = "0.7", default-features = false }
+ 
+@@ -48,7 +46,7 @@ include_dir = { version = "0.7", default-features = false }
  indoc = { version = "2", default-features = false }
+ iroh = { version = "1.2.0", default-features = false }
+ iroh-relay = { version = "1", default-features = false }
 -keyring = { version = "3.6.3", default-features = false, features = ["vendored"] }
 +keyring = { version = "3.6.3", default-features = false }
  lru = { version = "0.18", default-features = false }
  once_cell = { version = "1.21.3", default-features = false, features = ["std"] }
  rand = "0.10.1"
-@@ -72,7 +70,6 @@ urlencoding = { version = "2.1", default-features = false }
+@@ -75,7 +73,6 @@ urlencoding = { version = "2.1", default-features = false }
  uuid = { version = "1.23", default-features = false, features = ["v4", "std"] }
  webbrowser = { version = "1", default-features = false }
  which = { version = "8", default-features = false, features = ["real-sys"] }
 -winapi = { version = "0.3.9", default-features = false, features = ["wincred", "std"] }
  wiremock = { version = "0.6", default-features = false }
  zip = { version = "8", default-features = false, features = ["deflate"] }
- serial_test = { version = "3", default-features = false }
-@@ -110,10 +107,6 @@ llama-cpp-sys-2 = { version = "=0.1.146", default-features = false }
+ serial_test = { version = "4", default-features = false }
+@@ -114,9 +111,6 @@ llama-cpp-sys-2 = { version = "=0.1.146", default-features = false }
  icu_calendar = { version = "=2.1.1", default-features = false }
  icu_locale = { version = "=2.1.1", default-features = false }
-
+ 
 -[patch.crates-io]
 -v8 = { path = "vendor/v8" }
 -cudaforge = { git = "https://github.com/jbg/cudaforge", rev = "e7c1967340e40673db98dc9e17da0f04834a456f" }
--
+ 
  # Dependencies don't need debug info. You rarely step-debug into third-party
  # crates, but their DWARF dominates `target/debug` — roughly 50-70% of each
- # dependency rlib in this workspace is debug info. Dropping it for dependencies
 diff --git a/crates/goose-cli/Cargo.toml b/crates/goose-cli/Cargo.toml
-index 9bb000e..f061de7 100644
+index 200ff89..cfa3343 100644
 --- a/crates/goose-cli/Cargo.toml
 +++ b/crates/goose-cli/Cargo.toml
-@@ -68,25 +68,13 @@ axum.workspace = true
- axum-server = { version = "0.8", default-features = false, optional = true }
- clap_complete_nushell = { version = "4", default-features = false }
-
+@@ -78,16 +78,6 @@ clap_complete_nushell = { version = "4", default-features = false }
+ qrcode = { version = "0.14.1", optional = true }
+ fs2 = { workspace = true, optional = true }
+ 
 -[target.'cfg(target_os = "windows")'.dependencies]
 -anstream = { version = "1", default-features = false, features = ["wincon"] }
+-ntapi = { version = "0.4.3", default-features = false, features = ["user"] }
 -winapi = { workspace = true, features = [
 -    "consoleapi",
 -    "processenv",
@@ -68,52 +69,95 @@ index 9bb000e..f061de7 100644
 -    "wincon",
 -] }
 -
- [features]
+ [target."cfg(unix)".dependencies]
+ libc = { version = "0.2.182", default-features = false, features = ["std"] }
+ 
+@@ -95,12 +85,8 @@ libc = { version = "0.2.182", default-features = false, features = ["std"] }
  default = [
      "code-mode",
      "local-inference",
-     "tui",
 -    "aws-providers",
      "telemetry",
 -    "nostr",
      "otel",
 -    "rustls-tls",
+-    "live-voice",
      "system-keyring",
      "update",
  ]
+@@ -111,7 +97,6 @@ local-inference = ["goose/local-inference"]
+ aws-providers = ["goose/aws-providers"]
+ cuda = ["goose/cuda", "local-inference"]
+ vulkan = ["goose/vulkan", "local-inference"]
+-mlx = ["goose/mlx", "local-inference"]
+ telemetry = ["goose/telemetry"]
+ nostr = ["goose/nostr"]
+ otel = ["goose/otel"]
 diff --git a/crates/goose-local-inference/Cargo.toml b/crates/goose-local-inference/Cargo.toml
-index a4ecd64..7eac1f9 100644
+index b60f242..89ce9a1 100644
 --- a/crates/goose-local-inference/Cargo.toml
 +++ b/crates/goose-local-inference/Cargo.toml
-@@ -49,8 +49,5 @@ safemlx = { default-features = false, features = ["accelerate", "metal", "safete
- safemlx-lm = { optional = true, version = "0.1.5" }
- safemlx-lm-utils = { optional = true, version = "0.1.2" }
-
+@@ -15,7 +15,6 @@ workspace = true
+ default = []
+ cuda = ["llama-cpp-2/cuda"]
+ vulkan = ["llama-cpp-2/vulkan"]
+-mlx = ["dep:safemlx", "dep:safemlx-lm", "dep:safemlx-lm-utils"]
+ hf-hub = [
+     "dep:futures",
+     "dep:goose-download-manager",
+@@ -49,11 +48,6 @@ tokio = { workspace = true, features = ["fs", "rt-multi-thread", "sync", "time"]
+ tracing = { workspace = true }
+ uuid = { workspace = true, features = ["v4", "std"] }
+ 
 -[target.'cfg(target_os = "macos")'.dependencies]
 -llama-cpp-2 = { workspace = true, features = ["sampler", "metal", "mtmd"] }
--
+-safemlx = { default-features = false, features = ["accelerate", "metal", "safetensors"], optional = true, version = "0.1.2" }
+-safemlx-lm = { optional = true, version = "0.4.1" }
+-safemlx-lm-utils = { optional = true, version = "0.1.2" }
+ 
  [dev-dependencies]
  env-lock.workspace = true
+diff --git a/crates/goose-providers/Cargo.toml b/crates/goose-providers/Cargo.toml
+index 7bc4929..3d17851 100644
+--- a/crates/goose-providers/Cargo.toml
++++ b/crates/goose-providers/Cargo.toml
+@@ -17,7 +17,6 @@ local-inference = ["dep:goose-local-inference"]
+ local-inference-hf-hub = ["local-inference", "goose-local-inference/hf-hub"]
+ cuda = ["local-inference", "goose-local-inference/cuda"]
+ vulkan = ["local-inference", "goose-local-inference/vulkan"]
+-mlx = ["local-inference", "goose-local-inference/mlx"]
+ rustls-tls = [
+     "reqwest/rustls",
+     "rmcp/reqwest",
 diff --git a/crates/goose/Cargo.toml b/crates/goose/Cargo.toml
-index d9b439c..837df56 100644
+index ceb16d1..d45a738 100644
 --- a/crates/goose/Cargo.toml
 +++ b/crates/goose/Cargo.toml
-@@ -144,7 +144,7 @@ urlencoding = { workspace = true }
+@@ -41,7 +41,6 @@ aws-providers = [
+ ]
+ cuda = ["local-inference", "candle-core/cuda", "candle-nn/cuda", "goose-providers/cuda"]
+ vulkan = ["local-inference", "goose-providers/vulkan"]
+-mlx = ["local-inference", "goose-providers/mlx"]
+ rustls-tls = [
+     "dep:rustls",
+     "dep:rcgen",
+@@ -148,7 +147,7 @@ urlencoding = { workspace = true }
  v_htmlescape = { version = "0.17", default-features = false, features = ["std"] }
- sqlx = { version = "0.8.5", default-features = false, features = [
+ sqlx = { version = "0.9.0", default-features = false, features = [
      "runtime-tokio",
 -    "sqlite",
 +    "sqlite-unbundled",
      "chrono",
      "json",
      "macros",
-@@ -228,16 +228,6 @@ image = { version = "0.24.9", default-features = false, features = ["png", "jpeg
+@@ -235,17 +234,6 @@ image = { version = "0.24.9", default-features = false, features = ["png", "jpeg
  subtle = { version = "2.5", default-features = false, features = ["std"] }
  gethostname = "1.1.0"
-
+ 
 -[target.'cfg(target_os = "windows")'.dependencies]
 -winapi = { workspace = true, features = ["accctrl", "aclapi", "fileapi", "handleapi", "minwinbase", "sddl", "securitybaseapi", "winbase", "winerror"] }
 -keyring = { workspace = true, features = ["windows-native"], optional = true }
+-ntapi = { version = "0.4.3", default-features = false }
 -
 -# Platform-specific GPU acceleration for Whisper and local inference
 -[target.'cfg(target_os = "macos")'.dependencies]
@@ -123,6 +167,7 @@ index d9b439c..837df56 100644
 -
  [target.'cfg(target_os = "linux")'.dependencies]
  keyring = { workspace = true, features = ["sync-secret-service"], optional = true }
+ 
+-- 
+2.55.0
 
---
-2.43.0

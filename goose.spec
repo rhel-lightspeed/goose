@@ -146,6 +146,10 @@ Patch0102:      0102-Downstream-only-use-system-crypto-policy-in-openssl.patch
 #
 # Add disclaimer as required by legal only on RHEL
 Patch800:       0800-Include-legal-message-for-goose-proxy-provider.patch
+# Skip variable assignments from terminal integration shell history
+# This patch is going to be added on 1.54+ version on upstream and therefore
+# we should drop the 0801 patch
+Patch801:       0801-Downstream-only-filter-env-vars-from-shell-history.patch
 
 # i686: https://fedoraproject.org/wiki/Changes/EncourageI686LeafRemoval
 ExcludeArch:    %{ix86}

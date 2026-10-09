@@ -1,0 +1,34 @@
+From 0000000000000000000000000000000000000000 Mon Sep 17 00:00:00 2001
+From: thepetk <thepetk@gmail.com>
+Date: Thu, 09 Oct 2026 00:00:00 +0000
+Subject: [PATCH] Downstream-only: skip variable assignments in terminal history
+
+Variable assignment commands do not provide useful context for the AI
+and add noise to the shell history sent with each session turn. Skip
+commands that match export or bare assignment patterns in goose_preexec
+for bash and zsh.
+---
+ crates/goose-cli/src/commands/term.rs | 8 ++++++--
+ 1 file changed, 6 insertions(+), 2 deletions(-)
+
+diff --git a/crates/goose-cli/src/commands/term.rs b/crates/goose-cli/src/commands/term.rs
+--- a/crates/goose-cli/src/commands/term.rs
++++ b/crates/goose-cli/src/commands/term.rs
+@@ -46,6 +46,8 @@
+ goose_preexec() {
+     [[ "$1" =~ ^goose\ term ]] && return
+     [[ "$1" =~ ^(@goose|@g)($|[[:space:]]) ]] && return
++    [[ "$1" =~ ^export[[:space:]] ]] && return
++    [[ "$1" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] && return
+     ('{goose_bin}' term log "$1" &) 2>/dev/null
+ }
+
+@@ -72,6 +74,8 @@
+ goose_preexec() {
+     [[ "$1" =~ ^goose\ term ]] && return
+     [[ "$1" =~ ^(@goose|@g)($|[[:space:]]) ]] && return
++    [[ "$1" =~ ^export[[:space:]] ]] && return
++    [[ "$1" =~ ^[A-Za-z_][A-Za-z0-9_]*= ]] && return
+     ('{goose_bin}' term log "$1" &) 2>/dev/null
+ }
+

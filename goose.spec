@@ -271,7 +271,15 @@ License:        %{shrink:
                 }
 # LICENSE.dependencies contains a full license breakdown
 
+# On RHEL, use rust-toolset (ships rustc + cargo natively) to avoid the custom
+# rebuilds of cargo-rpm-macros, cargo2rpm, llhttp, and libgit2 that the version
+# required on Fedora would otherwise pull in. On Fedora the full Rust packaging
+# stack is available, so cargo-rpm-macros >= 25 is used directly.
+%if 0%{?rhel}
+BuildRequires:  rust-toolset
+%else
 BuildRequires:  cargo-rpm-macros >= 25
+%endif
 
 # Required by crate libdbus-sys (vendored)
 BuildRequires:  dbus-devel
@@ -529,8 +537,8 @@ target/rpm/generate_manpages
 
 %cargo_vendor_manifest
 
-%{cargo_license_summary} %{default_cargo_flags}
-%{cargo_license} %{default_cargo_flags} > LICENSE.dependencies
+%{cargo_license_summary %{default_cargo_flags}}
+%{cargo_license %{default_cargo_flags}} > LICENSE.dependencies
 
 %install
 install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}

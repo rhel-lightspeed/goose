@@ -115,6 +115,10 @@ Patch20:         0020-Fix-sql-statement-from-session-manager.patch
 # the snapshot test so it passes without that feature. That's better than
 # skipping the test entirely.
 Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
+# Downstream-only: adds --dangerous-include-history flag to `goose term init`,
+# making shell history recording opt-in. Based on upstream PR #13051 but carried
+# downstream until it lands in a release.
+Patch22:         0022-Add-dangerous-include-history.patch
 
 ## Downstream only patches (100-799)
 #

@@ -60,6 +60,9 @@ resolution and are NOT listed in the vendor tarball script.
 
 - `0020` — EPEL 9 SQLite compatibility (avoids RETURNING statement)
 - `0021` — Snapshot test update for code-mode being absent from build features
+- `0022` — Adds `--dangerous-include-history` flag to `goose term init`, making
+  shell history recording opt-in (based on upstream PR #13051; carry until it
+  lands in a release, then drop)
 
 ### Vendor patches (0100-0799) — Target vendored crates
 
@@ -70,6 +73,13 @@ Applied from the source root (paths start with `vendor/`):
   so they link against system `libzstd-devel` instead of compiling from bundled
   sources. Check on each bump whether upstream zstd-sys now includes `pkg-config`
   in its default features; if so, drop the patch.
+- `0102` — Replace the hardcoded OpenSSL cipher list in `vendor/openssl-{VER}/src/ssl/connector.rs`
+  with `PROFILE=SYSTEM` so the system crypto policy governs TLS cipher selection.
+  The patch path embeds the `openssl` crate version; when that version changes,
+  regenerate the patch against the new vendored file. The checksum is zeroed in
+  `%prep` via the `for crate in ring zstd-sys zstd-safe zstd openssl; do` loop
+  (no explicit `%global openssl_ver` macro — the loop uses `find` to locate the
+  versioned directory dynamically).
 
 ### RHEL-only patches (0800-0899) — Conditional on `%if 0%{?rhel}`
 
@@ -158,7 +168,7 @@ inside `vendor/`), as their paths already start with `vendor/`:
 
 ```bash
 tar xf goose-{TARGET_VERSION}-vendor.tar.zstd
-for p in ../0100*.patch ../0101*.patch; do
+for p in ../0100*.patch ../0101*.patch ../0102*.patch; do
   [ -f "$p" ] || continue
   echo "=== Testing: $p"
   patch -p1 --dry-run < "$p" && echo "OK" || echo "FAILED"
@@ -180,6 +190,11 @@ if so:
 Check whether upstream `zstd-sys` now includes `pkg-config` in its default
 features; if so, drop 0101 entirely and remove the three `jq` commands for
 zstd crates from `%prep` and their `%global` macros from the spec.
+
+Check if the `openssl` crate version changed — if so:
+- Regenerate 0102 against the new `vendor/openssl-{NEW_VER}/src/ssl/connector.rs`
+- No spec macro or `jq` command needs updating — the `%prep` checksum loop
+  uses `find` to locate the versioned directory dynamically.
 
 **`.cargo-checksum.json` handling — important convention:**
 Do NOT include `.cargo-checksum.json` hunks in any vendor patch. The exact

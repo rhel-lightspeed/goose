@@ -165,6 +165,12 @@ Conflicts: golang-github-pressly-goose
 # MIT (Minified JavaScript libraries):
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/chart.min.js
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/mermaid.min.js
+#     NOTE: rpminspect flags U+202A (LEFT-TO-RIGHT EMBEDDING) in mermaid.min.js
+#     (line 349, col 89). This is a false positive: the character is a Unicode
+#     range endpoint (‪-퟿) inside a JavaScript string literal that
+#     builds a regex in KaTeX's tokenizer (bundled within mermaid.js). It does
+#     not manipulate code visibility and is not a Trojan Source (CVE-2021-42574)
+#     injection. See: https://github.com/KaTeX/KaTeX/blob/main/src/Lexer.js
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/leaflet.markercluster.min.js
 #
 # ISC (Minified JavaScript library):

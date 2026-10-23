@@ -107,7 +107,7 @@ jobs:
     fmf_url: "https://gitlab.cee.redhat.com/rhel-lightspeed/enhanced-shell/goose-tests"
     fmf_ref: "develop"
     use_internal_tf: True
-    identifier: goose-tests-internal
+    identifier: goose-tests-rhel
     tmt_plan: "level0"
     env:
       GOOSE_TESTS_GOOSE_REDHAT_PACKAGE_SOURCE_PROFILE: "copr"
@@ -133,10 +133,9 @@ jobs:
     # The public test suite is an imported test plan, that's why we use the main branch here.
     fmf_url: "https://gitlab.com/redhat/centos-stream/tests/goose"
     fmf_ref: "main"
-    identifier: goose-tests-public
+    identifier: goose-tests-fedora
     tmt_plan: "/plans"
     targets:
-      <<: *rhel_x86_64_targets
       fedora-43-x86_64:
         distros:
           - Fedora-43

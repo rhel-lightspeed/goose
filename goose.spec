@@ -115,6 +115,10 @@ Patch20:         0020-Fix-sql-statement-from-session-manager.patch
 # the snapshot test so it passes without that feature. That's better than
 # skipping the test entirely.
 Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
+# Downstream-only: adds --dangerous-include-history flag to `goose term init`,
+# making shell history recording opt-in. Based on upstream PR #13051 but carried
+# downstream until it lands in a release.
+Patch22:         0022-Add-dangerous-include-history.patch
 
 ## Downstream only patches (100-799)
 #
@@ -161,6 +165,12 @@ Conflicts: golang-github-pressly-goose
 # MIT (Minified JavaScript libraries):
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/chart.min.js
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/mermaid.min.js
+#     NOTE: rpminspect flags U+202A (LEFT-TO-RIGHT EMBEDDING) in mermaid.min.js
+#     (line 349, col 89). This is a false positive: the character is a Unicode
+#     range endpoint (‪-퟿) inside a JavaScript string literal that
+#     builds a regex in KaTeX's tokenizer (bundled within mermaid.js). It does
+#     not manipulate code visibility and is not a Trojan Source (CVE-2021-42574)
+#     injection. See: https://github.com/KaTeX/KaTeX/blob/main/src/Lexer.js
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/leaflet.markercluster.min.js
 #
 # ISC (Minified JavaScript library):

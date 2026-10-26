@@ -162,6 +162,14 @@ echo "[+] Tarball verified, extracting..."
 # We remove vendor folder to avoid conflicts with ``cargo vendor-filterer`
 rm -rf "$GOOSE_SOURCE" && run tar -xzf "$GOOSE_SOURCE_TARBALL" --exclude "${GOOSE_SOURCE}/vendor"
 
+echo "[+] Patching mermaid.min.js: replacing literal bidi control character with JS escape..."
+LC_ALL=C sed -i $'s/\xe2\x80\xaa/\\u202A/g' \
+    "${GOOSE_SOURCE}/crates/goose-mcp/src/autovisualiser/templates/assets/mermaid.min.js"
+
+echo "[+] Repacking source tarball with patched mermaid.min.js..."
+rm -f "$GOOSE_SOURCE_TARBALL"
+run tar -czf "$GOOSE_SOURCE_TARBALL" "$GOOSE_SOURCE"
+
 echo "[+] Applying patches..."
 pushd "$GOOSE_SOURCE" >/dev/null
 for patch in "${PATCHES[@]}"; do

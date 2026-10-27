@@ -164,12 +164,7 @@ Conflicts: golang-github-pressly-goose
 #
 # MIT (Minified JavaScript libraries):
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/chart.min.js
-#
-#     NOTE: KaTeX (bundled within mermaid.js) contains a bidi control character
-#     as a range boundary in its tokenizer regex. A downstream sed in %%prep
-#     replaces it with the equivalent JS escape without any functional change.
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/mermaid.min.js
-#
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/leaflet.markercluster.min.js
 #
 # ISC (Minified JavaScript library):

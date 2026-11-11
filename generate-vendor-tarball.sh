@@ -71,6 +71,49 @@ build_crate_paths() {
     )
 }
 
+# Crates that Cargo's *dependency* resolver keeps in the lock graph even though
+# they are never compiled for our feature set. reqwest declares
+# `http2 = [..., "hyper-rustls?/http2"]`; weak (`dep?/feature`) references like
+# this make `cargo metadata` (and therefore cargo-vendor-filterer) treat
+# hyper-rustls as reachable, which drags in the whole rustls stack. The feature
+# resolver used by the real build never activates them (verify with
+# `cargo tree -p goose-cli -e normal,build,dev`), so we replace them with empty
+# stubs the same way cargo-vendor-filterer stubs non-Linux crates. If the build
+# ever starts using one of these for real, it fails loudly at compile time.
+STUB_CRATES=(
+    rustls
+    hyper-rustls
+    tokio-rustls
+    rustls-webpki
+)
+
+# Replace a vendored crate directory with an empty stub: keep Cargo.toml (so
+# dependencies/features still resolve) minus the build script and non-lib
+# targets, an empty src/lib.rs, and a regenerated .cargo-checksum.json that
+# keeps the original registry package checksum.
+stub_crate() {
+    local dir="$1"
+    local pkg_sum
+    pkg_sum=$(jq -r '.package' "$dir/.cargo-checksum.json")
+    awk '
+        /^\[\[(example|bench|test|bin)\]\]$/ { skip = 1; next }
+        /^\[/                               { skip = 0 }
+        skip                                { next }
+        /^build = /                         { next }
+        { print }
+    ' "$dir/Cargo.toml" > "$dir/Cargo.toml.stub"
+    find "$dir" -mindepth 1 -maxdepth 1 ! -name Cargo.toml.stub -exec rm -rf {} +
+    mv "$dir/Cargo.toml.stub" "$dir/Cargo.toml"
+    mkdir "$dir/src"
+    : > "$dir/src/lib.rs"
+    jq -n \
+        --arg toml "$(sha256sum "$dir/Cargo.toml" | awk '{print $1}')" \
+        --arg lib "$(sha256sum "$dir/src/lib.rs" | awk '{print $1}')" \
+        --arg pkg "$pkg_sum" \
+        '{files: {"Cargo.toml": $toml, "src/lib.rs": $lib}, package: $pkg}' \
+        > "$dir/.cargo-checksum.json"
+}
+
 # Helper function to find out if the required tools are present.
 check_required_tools() {
     # Ensure ~/.cargo/bin is in PATH (cargo install places binaries there)
@@ -191,11 +234,30 @@ run cargo vendor-filterer --tier=2 "${PLATFORM_ARGS[@]}" \
     --features "${FEATURES}" \
     --versioned-dirs \
     "${EXCLUDE_ARGS[@]}" \
-    --prefix vendor \
-    --format=tar.zstd
+    vendor
 
-echo "[+] Moving vendor tarball to repo root..."
-mv vendor.tar.zstd "../${NAME}-${VERSION}-vendor.tar.zstd"
+echo "[+] Stubbing crates that are resolved but never compiled..."
+for crate in "${STUB_CRATES[@]}"; do
+    # Exact "<name>-<version>" match so e.g. "rustls" does not hit "rustls-webpki".
+    matches=()
+    for dir in vendor/"${crate}"-[0-9]*/; do
+        [ -d "$dir" ] && matches+=("${dir%/}")
+    done
+    if [ ${#matches[@]} -eq 0 ]; then
+        echo "[!]   $crate not vendored anymore; remove it from STUB_CRATES"
+        continue
+    fi
+    for dir in "${matches[@]}"; do
+        stub_crate "$dir"
+        echo "[!]   Stubbed $dir"
+    done
+done
+
+echo "[+] Creating vendor tarball..."
+# Deterministic archive: sorted entries, fixed ownership and timestamps.
+run tar --sort=name --owner=0 --group=0 --numeric-owner \
+    --mtime="@${SOURCE_DATE_EPOCH:-0}" \
+    --zstd -cf "../${NAME}-${VERSION}-vendor.tar.zstd" vendor
 
 popd >/dev/null
 

@@ -1,16 +1,16 @@
---- a/vendor/zstd-sys-2.0.16+zstd.1.5.7/Cargo.toml
-+++ b/vendor/zstd-sys-2.0.16+zstd.1.5.7/Cargo.toml
-@@ -60,6 +60,7 @@
+--- a/vendor/zstd-sys-2.1.2+zstd.1.5.7/Cargo.toml
++++ b/vendor/zstd-sys-2.1.2+zstd.1.5.7/Cargo.toml
+@@ -66,6 +66,7 @@
+ default = [
      "legacy",
      "zdict_builder",
-     "bindgen",
 +    "pkg-config",
  ]
  experimental = []
  fat-lto = []
---- a/vendor/zstd-safe-7.2.4/Cargo.toml
-+++ b/vendor/zstd-safe-7.2.4/Cargo.toml
-@@ -53,6 +53,7 @@
+--- a/vendor/zstd-safe-8.2.0/Cargo.toml
++++ b/vendor/zstd-safe-8.2.0/Cargo.toml
+@@ -54,6 +54,7 @@
      "legacy",
      "arrays",
      "zdict_builder",
@@ -18,17 +18,17 @@
  ]
  doc-cfg = []
  experimental = ["zstd-sys/experimental"]
-@@ -74,6 +75,7 @@
+@@ -93,6 +94,7 @@
  [dependencies.zstd-sys]
- version = "2.0.15"
+ version = "2.1.2"
  default-features = false
 +features = ["pkg-config"]
  
  [lints.rust]
  non_upper_case_globals = "allow"
---- a/vendor/zstd-0.13.3/Cargo.toml
-+++ b/vendor/zstd-0.13.3/Cargo.toml
-@@ -59,6 +59,7 @@
+--- a/vendor/zstd-0.14.3/Cargo.toml
++++ b/vendor/zstd-0.14.3/Cargo.toml
+@@ -57,6 +57,7 @@
      "legacy",
      "arrays",
      "zdict_builder",
@@ -36,10 +36,10 @@
  ]
  doc-cfg = []
  experimental = ["zstd-safe/experimental"]
-@@ -107,7 +108,7 @@
+@@ -139,7 +140,7 @@
  
  [dependencies.zstd-safe]
- version = "7.1.0"
+ version = "8.2.0"
 -features = ["std"]
 +features = ["std", "pkg-config"]
  default-features = false

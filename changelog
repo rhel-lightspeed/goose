@@ -1,3 +1,47 @@
+* Tue Nov 10 2026 Rodolfo Olivieri <rolivier@redhat.com> - 1.59.0-1
+- Update to version 1.59.0
+- Security fix: arbitrary command execution via malicious git `diff.external` config in `goose review` (GHSA-6mg9-3cvh-9939)
+- Security: bump zstd crate to 0.14.3 and pulldown-cmark to 0.13.6 for RUSTSEC advisories; drop jsonwebtoken dependency (RUSTSEC-2026-0387)
+- Security: guard MCP streamable-HTTP client redirects against SSRF; require HTTPS for Snowflake and secure OAuth/Copilot token transport
+- Extensive security hardening: fail-closed tool/app visibility, permission denies take precedence, per-turn tool allowlists, contained recipe/hint/skill/REVIEW.md paths, bounded image/XLSX/JSON/mention reads, Unicode tag sanitization in MCP prompts and resources, secret redaction in provider errors, stricter session and secret file permissions
+- Shell history in `goose term init` integration is now opt-in via --dangerous-include-history
+- Remove the TUI (`goose tui` command)
+- Remove planning mode from the CLI
+- Remove the CLI create recipe command
+- Remove CLI project support
+- Remove MCP sampling support
+- Remove fast model routing (GOOSE_FAST_MODEL); session naming, labels and compaction now use the main session model
+- Remove background (async) subagents; delegate runs synchronously, doctor is session-only
+- Remove automation_script, web_scrape and cache tools from the computercontroller extension
+- Remove ACP client-delegated developer tools
+- New unrolled state-machine agent loop replaces the legacy agent loop, with per-session extensions started lazily on first use
+- Extensions load in the background so the CLI prompt is usable immediately
+- Stream shell output while commands run; terminate owned shell process trees on cancellation
+- HTML session export with an interactive viewer, plus Markdown export format
+- CLI session rename command; session remove shows the working directory
+- /new slash command to start a fresh session; --with-extension can name its extension
+- Interactive menu for single-select elicitations in the CLI
+- Opt-in terminal bell when a turn finishes or approval is needed; session status reported via OSC 7501
+- Prompt for goose mode during first-time configure
+- Hooks: on_failure block and PreToolUseResult event for PreToolUse hooks, stable tool_call_id; subagents inherit parent hooks, mode and approvals
+- Subagents: resume failed, cancelled or completed delegates; limit concurrency with GOOSE_MAX_CONCURRENT_SUBAGENTS
+- Built-in web-search and browser-use skills; pre-registered OAuth client support for streamable_http extensions
+- Live model metadata from models.dev with bundled fallback; vision support resolved from the model catalog
+- Context management: auto-compaction capped at 225k tokens by default, compaction at tool boundaries, automatic thinking level, opt-in context relevance operation, context window report
+- Cache-safe request assembly keeps turn context out of provider prefix caches for better prompt caching
+- Live voice via ACP: GPT-Live API support with configurable endpoint, model, key and voice instructions
+- OpenTelemetry: GenAI semantic convention attributes, request/response metadata, W3C trace context propagation to MCP tool calls, content capture opt-out
+- ACP: hidden sessions, caller-supplied session IDs, session/list filtering by client tags, thinking effort forwarding
+- Telegram gateway: operator allowlist for pairing and protected pairing codes
+- Upgrade to rmcp 3.4 and ACP SDK 1.3.0; prefer latest MCP protocol version
+- New providers: Celeris, Friendli, Azure AI Foundry, TrustedRouter, OpenCode Zen, Gondola, SayGM, Lynkr, PleumRouter, Opper, EUrouter, Z.AI Coding Plan, Meta Muse Code, AIgateway, IO Intelligence, AIHubMix, RouterPlex, Lemonade, AIML API; Databricks Unity Catalog model discovery
+- New models: GPT-6 Astra/sol/luna and GPT-6.1-sol, Claude Opus 5.5, Sonnet 5, Sonnet/Haiku 5.5 adaptive thinking, GLM-5.3, Kimi K3, Cursor composer-2.5
+- Custom providers can declare cost, cache prices and vision support
+- Provider-safe public names for MCP tools; provider x-request-id and output-token-limit info surfaced in responses and errors
+- Deprecate Gemini OAuth provider
+- Numerous provider fixes for OpenAI Responses, Anthropic thinking, OpenRouter, Databricks, GitHub Copilot, Google, LiteLLM, DeepSeek and Ollama
+- Numerous ACP, scheduler, recipe, session-handling and subagent bug fixes, plus faster session listing and CLI streaming render
+
 * Thu Aug 20 2026 thepetk <thepetk@gmail.com> - 1.45.0-1
 - Update to version 1.45.0
 - Security fix: arbitrary command execution in goose CLI via `goose review` (GHSA-r5pp-p5r8-466r)

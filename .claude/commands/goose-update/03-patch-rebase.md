@@ -7,6 +7,33 @@ Requires: Phase 2 completed (new source tarball downloaded).
 
 ---
 
+## Patch Format
+
+All downstream patches are **plain unified diffs without git metadata**: no
+`From`/`Date`/`Subject` header, no diffstat, no `diff --git`/`index`/file-mode
+lines and no `-- <git version>` trailer — only `--- a/…` / `+++ b/…` headers
+and hunks (new files use `--- /dev/null`). The patch's purpose is documented in
+the comment above its `Patch` tag in `goose.spec`, not in the patch itself.
+
+To create or regenerate a patch, commit the change on top of the previous patch
+in a git checkout of the extracted source (for `vendor/` patches, extract the
+vendor tarball into that checkout first) and run:
+
+```bash
+git diff --no-color --no-renames HEAD~1 HEAD \
+  | grep -vE '^(diff --git |index |(new|deleted) file mode |old mode |new mode )' \
+  > NNNN-Short-description.patch
+```
+
+Never `git diff` after running `cargo` in the tree: cargo rewrites
+`Cargo.lock`, and those hunks must not end up in a patch (none of our patches
+touch `Cargo.lock`). Check with `grep '^+++ ' NNNN-*.patch` before committing.
+
+**Exception:** patches taken verbatim from an upstream PR (e.g. `Patch21:
+%{url}/pull/13433.patch#/0021-….patch`) keep their git metadata, are
+referenced by URL, and get a TODO comment to drop them once the PR ships in a
+release.
+
 ## Patch Series Structure
 
 Patches are organized into three categories by purpose:
@@ -131,7 +158,8 @@ changes dependencies, they almost always need regenerating.
    upstream removed it (or moved it behind a feature flag), drop the patch. Also
    check that `crates/goose/Cargo.toml`'s rustls-tls feature still needs the
    explicit `rustls/aws_lc_rs` activation.
-4. Generate each patch with `git diff` after committing the previous one.
+4. Generate each patch after committing the previous one, using the command in
+   [Patch Format](#patch-format) (plain unified diff, no git metadata).
 
 **CRITICAL:** Any patch that modifies `Cargo.toml` or `Cargo.lock` must be
 listed in `generate-vendor-tarball.sh`'s `PATCHES` array because it affects

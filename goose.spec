@@ -25,16 +25,32 @@
 %constrain_build -m 6144
 
 %global rustflags_codegen_units 16
+
 # Features used at build and test time via '%%cargo_build -n -f' and
 # '%%cargo_test -n -f' (-n = --no-default-features, -f = --features).
 # Must match the --features argument in generate-vendor-tarball.sh so the vendor
 # tarball contains exactly the crates needed to build this feature set.
-%global downstream_features native-tls,otel,telemetry,system-keyring,disable-update
+#
+#   native-tls         TLS via system OpenSSL (instead of rustls/aws-lc)
+#   otel               OpenTelemetry tracing/metrics export
+#   telemetry          Opt-in usage telemetry (PostHog)
+#   system-keyring     Store secrets in the system keyring (Secret Service)
+#   disable-update     Disable the built-in self-update command
+#   bundled-mcp        Built-in MCP extensions (developer, computercontroller,
+#                      memory, autovisualiser, tutorial)
+#   tree-sitter        Code analysis via tree-sitter grammars
+#   scheduler          Scheduled recipe runs (cron)
+#   acp-http           ACP server over HTTP
+#   platform-apps      Built-in platform apps extension
+#   chat-recall        Search/load past sessions (chat recall extension)
+#   live-voice         Live voice sessions over WebSocket
+#   online-model-meta  Fetch model metadata from models.dev at runtime
+%global downstream_features native-tls,otel,telemetry,system-keyring,disable-update,bundled-mcp,tree-sitter,scheduler,acp-http,platform-apps,chat-recall,live-voice,online-model-meta
 
 # Holds the default/shared flags used across different cargo commands.
 #
 # -n -f "%%{downstream_features}": explicitly disable upstream defaults
-# (includes rustls-tls, aws-providers, tui, code-mode, and other features
+# (includes rustls-tls, aws-providers, code-mode, local-inference, and other features
 # incompatible with Fedora packaging guidelines) and activate only the
 # features needed for downstream packaging.
 %global default_cargo_flags -n -f "%{downstream_features}"
@@ -56,7 +72,7 @@
 # instead passed through raw to the underlying 'cargo build'/'cargo test'
 # invocation.
 #
-# --ignore-rust-version: goose 1.45.0 declares rust-version = "1.94.1", but
+# --ignore-rust-version: goose 1.59.0 declares rust-version = "1.94.1", but
 # RHEL 9/10 and EPEL 9/10 currently ship an older Rust toolset (1.92.0) and
 # won't pick up 1.94 until ~Nov 2026. This skips cargo's pre-flight MSRV
 # check and attempts the build anyway; it only works if the code doesn't
@@ -65,7 +81,7 @@
 %global goose_cargo_flags %{default_cargo_flags} -- --package goose-cli --ignore-rust-version
 
 Name:           goose
-Version:        1.45.0
+Version:        1.59.0
 Release:        %autorelease
 Summary:        Extensible AI agent client
 URL:            https://github.com/aaif-goose/goose
@@ -85,24 +101,34 @@ Source99:       generate-vendor-tarball.sh
 # other than just being here to facilitate `fedpkg/rhpkg import` in the downstream.
 Source100:      changelog
 
+# Downstream patches are plain unified diffs (no git metadata). To create or
+# regenerate one, commit the change in a git checkout of the extracted source
+# (vendor/ patches: extract the vendor tarball first) and run:
+#   git diff --no-color --no-renames HEAD~1 HEAD \
+#     | grep -vE '^(diff --git |index |(new|deleted) file mode |old mode |new mode )' \
+#     > NNNN-Short-description.patch
+# Patches taken verbatim from upstream PRs (e.g. Patch21) keep their metadata.
+
 ## Dependency patches (1-19)
 #
-# Strip non-Linux platform deps (Windows winapi/winreg, macOS metal/apple-native
-# keyring), remove the vendor/v8 workspace member and all [patch.crates-io]
-# entries (v8, cudaforge). Remove keyring 'vendored' feature (use system dbus).
-# Switch sqlx from bundled 'sqlite' to 'sqlite-unbundled' to use system libsqlite3.
-# Remove 'nostr', 'aws-providers', and 'rustls-tls' from goose-cli default
-# features to prevent unwanted crates from leaking into the vendor tarball via
-# cargo vendor-filterer workspace-level resolution (resolver=2 does not propagate
-# --no-default-features to individual workspace members).
-# Feature flags (native-tls, otel, telemetry, system-keyring, disable-update) are
-# passed explicitly at build time via '%%cargo_build -n -f' and '%%cargo_test -n -f',
-# into Cargo.toml; see %build and %check.
+# Strip non-Linux platform deps (Windows winapi/ntapi, macOS metal/apple-native
+# keyring) and the cudaforge [patch.crates-io] override. Remove keyring
+# 'vendored' feature (use system dbus/openssl). Switch sqlx from bundled
+# 'sqlite' to 'sqlite-unbundled' to use system libsqlite3.
+# It also keeps aws-lc-sys, rustls and sigstore out of the vendor tarball,
+# which cargo vendor-filterer resolves for the whole workspace rather than
+# only for goose-cli:
+#   * exclude crates/goose-roaming from the workspace and drop the opt-in
+#     'roaming' feature (goose-roaming hard-depends on iroh with tls-aws-lc-rs);
+#   * drop the weak 'sigstore-verify?/{native-tls,rustls}' feature entries,
+#     which make Cargo's dependency resolver keep sigstore in the lock graph
+#     even though the 'update' feature is disabled;
+#   * drop goose-providers' aws_lc_rs-backed rcgen/tokio-rustls
+#     dev-dependencies (only used by a goose-providers test we never build).
+# Feature flags are passed explicitly at build time via '%%cargo_build -n -f'
+# and '%%cargo_test -n -f' (see %%{downstream_features}), not patched into
+# Cargo.toml.
 Patch1:         0001-Strip-non-Linux-deps-and-use-system-libraries.patch
-# Remove aws_lc_rs from the workspace-level rustls default-features so it is
-# not pulled into the native-tls build path. Activate it explicitly only under
-# the rustls-tls feature flag in crates/goose/Cargo.toml.
-Patch2:         0002-aws-lc-rs-feature-flag.patch
 
 ## Code patches (20-99)
 #
@@ -111,14 +137,13 @@ Patch2:         0002-aws-lc-rs-feature-flag.patch
 # SQLite 3.34.1, so we split the INSERT + SELECT into two statements and
 # replace unixepoch() with CAST(strftime('%s', ...) AS INTEGER).
 Patch20:         0020-Fix-sql-statement-from-session-manager.patch
-# code-mode is not in the --features list passed at build time, so we update
-# the snapshot test so it passes without that feature. That's better than
-# skipping the test entirely.
-Patch21:         0021-Update-snapshot-test-without-codemode-instructions.patch
-# Downstream-only: adds --dangerous-include-history flag to `goose term init`,
-# making shell history recording opt-in. Based on upstream PR #13051 but carried
-# downstream until it lands in a release.
-Patch22:         0022-Add-dangerous-include-history.patch
+# Add the missing license texts for the minified JavaScript libraries embedded
+# by the session HTML export (crates/goose/src/session/export_html/vendor/:
+# highlight.js 11.9.0, marked 18.0.5) under crates/goose/licenses/.
+# Proposed upstream in https://github.com/aaif-goose/goose/pull/13433
+# TODO: drop this patch in the first release that includes that PR (the
+# %%license lines in %%files stay unchanged).
+Patch21:         %{url}/pull/13433.patch#/0021-Include-3rd-party-license-copy-for-session-export-JavaScript-files.patch
 
 ## Downstream only patches (100-799)
 #
@@ -167,11 +192,16 @@ Conflicts: golang-github-pressly-goose
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/mermaid.min.js
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/leaflet.markercluster.min.js
 #
+# MIT AND BSD-3-Clause (Minified JavaScript library; marked's LICENSE also
+# carries the original Markdown license by John Gruber):
+#   - crates/goose/src/session/export_html/vendor/marked.min.js
+#
 # ISC (Minified JavaScript library):
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/d3.min.js
 #
-# BSD-3-Clause (Minified Javascript library):
+# BSD-3-Clause (Minified Javascript libraries):
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/d3.sankey.min.js
+#   - crates/goose/src/session/export_html/vendor/highlight.min.js
 #
 # BSD-2-Clause: (Minified JavaScript library and CSS stylesheet)
 #   - crates/goose-mcp/src/autovisualiser/templates/assets/leaflet.min.js
@@ -180,20 +210,13 @@ Conflicts: golang-github-pressly-goose
 # CC-BY-4.0:
 #   - All documentation (excluding specifications)
 #
-# CDLA-Permissive-2.0:
-#   - introduced by the opentelemetry-semantic-conventions crate
-#
-# licensecheck will report that set of 6 licenses for the source archive.
+# licensecheck will report that set of 5 licenses for the source archive.
 #
 # A couple of files present under `crates/goose-mcp` and `crates/goose-cli`
 # were discussed in the legal ML due to them not having a clear license or
 # copyright terms in the upstream repository. The discussion of those items can
 # be seen at:
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
-#
-#   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the
@@ -205,11 +228,8 @@ Conflicts: golang-github-pressly-goose
 # Apache-2.0
 # Apache-2.0 AND ISC
 # Apache-2.0 OR BSL-1.0
-# Apache-2.0 OR BSL-1.0 OR MIT
-# Apache-2.0 OR ISC OR MIT
 # Apache-2.0 OR MIT
 # Apache-2.0 WITH LLVM-exception OR Apache-2.0 OR MIT
-# BSD-2-Clause
 # BSD-2-Clause OR Apache-2.0 OR MIT
 # BSD-3-Clause
 # BSD-3-Clause AND MIT
@@ -218,15 +238,11 @@ Conflicts: golang-github-pressly-goose
 # BSL-1.0
 # CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
 # CC0-1.0 OR MIT-0 OR Apache-2.0
-# CDLA-Permissive-2.0
 # ISC
-# ISC AND (Apache-2.0 OR ISC)
-# ISC AND (Apache-2.0 OR ISC) AND Apache-2.0 AND MIT AND BSD-3-Clause AND (Apache-2.0 OR ISC OR MIT) AND (Apache-2.0 OR ISC OR MIT-0)
 # LGPL-3.0-or-later
 # MIT
 # MIT AND BSD-3-Clause
 # MIT OR Apache-2.0
-# MIT OR Apache-2.0 OR BSD-1-Clause
 # MIT OR Apache-2.0 OR LGPL-2.1-or-later
 # MIT OR Apache-2.0 OR Zlib
 # MIT OR Zlib OR Apache-2.0
@@ -234,7 +250,6 @@ Conflicts: golang-github-pressly-goose
 # MPL-2.0
 # Unicode-3.0
 # Unlicense OR MIT
-# Unlicense OR MIT OR Apache-2.0 OR CC0-1.0
 # Zlib
 # Zlib OR Apache-2.0 OR MIT
 # bzip2-1.0.6
@@ -244,16 +259,10 @@ License:        %{shrink:
                 AND (Apache-2.0 AND ISC)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR CC0-1.0)
                 AND (Apache-2.0 OR Apache-2.0 WITH LLVM-exception OR MIT)
-                AND (Apache-2.0 OR BSD-1-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-2-Clause OR MIT)
                 AND (Apache-2.0 OR BSD-3-Clause)
                 AND (Apache-2.0 OR BSL-1.0)
-                AND (Apache-2.0 OR BSL-1.0 OR MIT)
-                AND (Apache-2.0 OR CC0-1.0 OR MIT OR Unlicense)
                 AND (Apache-2.0 OR CC0-1.0 OR MIT-0)
-                AND (Apache-2.0 OR ISC)
-                AND (Apache-2.0 OR ISC OR MIT)
-                AND (Apache-2.0 OR ISC OR MIT-0)
                 AND (Apache-2.0 OR LGPL-2.1-or-later OR MIT)
                 AND (Apache-2.0 OR MIT)
                 AND (Apache-2.0 OR MIT OR Zlib)
@@ -262,7 +271,6 @@ License:        %{shrink:
                 AND (BSD-3-Clause AND MIT)
                 AND (BSD-3-Clause OR MIT)
                 AND BSL-1.0
-                AND CDLA-Permissive-2.0
                 AND ISC
                 AND LGPL-3.0-or-later
                 AND MIT
@@ -300,6 +308,8 @@ BuildRequires:  /usr/bin/perl
 BuildRequires:  libzstd-devel
 # Required in %%prep to zero out .cargo-checksum.json files dict after patching
 BuildRequires:  jq
+# Used by the test crates/goose-cli/src/commands/review/handler.rs
+BuildRequires:  git
 # fdupes is used to deduplicate debug source files but is not available in base
 # RHEL repositories (only in EPEL), so it is restricted to Fedora builds only
 %if ! 0%{?rhel}
@@ -385,7 +395,7 @@ Provides:       bundled(sublime-theme-Spacegray)
 # `blake3` crate. The upstream build.rs has no pkg-config hook to use the
 # system blake3-devel package, so the C sources are compiled at build time.
 # blake3: CC0-1.0 OR Apache-2.0 OR Apache-2.0 WITH LLVM-exception
-Provides:       bundled(blake3) = 1.8.5
+Provides:       bundled(blake3) = 1.8.7
 
 # Minified JavaScript libraries and minified CSS stylesheets contained in
 # `goose-mcp` crate for the autovisualizer tool.
@@ -412,13 +422,24 @@ Provides:       bundled(leaflet-markercluster-min-js) = 1.5.3
 # any version here.
 Provides:       bundled(mermaid-min-js)
 
+# Minified JavaScript libraries contained in `goose` crate for the session
+# HTML export feature (embedded via include_str!, always compiled).
+#   * crates/goose/src/session/export_html/vendor/
+#
+# Note: Versions where checked under each minified file.
+#
+# highlight.min.js: BSD-3-Clause
+Provides:       bundled(highlight-min-js) = 11.9.0
+# marked.min.js: MIT AND BSD-3-Clause
+Provides:       bundled(marked-min-js) = 18.0.5
+
 # Tree-sitter parsing library and language grammars. The C sources are compiled
 # at build time from the vendored crates. System packages exist in Fedora for
 # most of these, but the upstream build.rs scripts have no pkg-config hook to
 # use them. tree-sitter-kotlin and tree-sitter-swift have no Fedora system
 # package at all.
 # tree-sitter: MIT
-Provides:       bundled(tree-sitter) = 0.26.10
+Provides:       bundled(tree-sitter) = 0.26.13
 # tree-sitter-go: MIT
 Provides:       bundled(tree-sitter-go) = 0.25.0
 # tree-sitter-java: MIT
@@ -483,15 +504,12 @@ done
 %autopatch -p1 -m 800 -M 899
 %endif
 
-# Remove the documentation folder but leave `static/img/logo_{dark,light}.png`
-# in it, as they are used in goose-cli crate. All the other markdown, audio,
-# images and etc are not necessary to be present here.
-find documentation \
-    -depth \( -type f ! -path "documentation/static/img/logo_dark.png" ! -path "documentation/static/img/logo_light.png" -delete \) \
-    -o \( -type d -empty -delete \)
-
 # The following folders are being deleted here so they are not present in the
 # rebuilt srpm.
+#   * Delete the `documentation` folder: markdown, audio, images, etc. for the
+#     upstream website. Nothing in the compiled crates references it anymore
+#     (the logo_{dark,light}.png exception is no longer needed since 1.59.0).
+#
 #   * Delete the `ui` folder as it contains the electron desktop app for Goose,
 #     which should not be packaged here.
 #
@@ -507,17 +525,8 @@ find documentation \
 #     not provide any benefit to keep it here as it is not being used by the
 #     goose source in any way or form.
 #
-#   * Remove the in-tree vendor/v8 shim crate (used by upstream for code-mode
-#     feature which we disable). Already removed from workspace members by
-#     patch.
-rm -rf ui bin .claude .codex .cursor evals services oidc-proxy vendor/v8
-
-# Remove the `test_image.jpg` as we are not sure if this was LLM generated or
-# made by a human. Since there is no copyright data anywhere in the repository
-# mentioning this and the PR that introduced it
-# (https://github.com/block/goose/pull/3688) does not mention anything about
-# the source of the image, it's better that we remove this anyway.
-rm crates/goose-cli/src/scenario_tests/test_data/test_image.jpg
+#   * Remove the `buzz` folder as it contains upstream sync from aaif-goose/goose issues to their buzz.gdk.so 
+rm -rf documentation ui bin evals services oidc-proxy buzz
 
 # Sometimes Rust sources start with #![...] attributes, and "smart" editors
 # think it's a shebang and make them executable. Then brp-mangle-shebangs gets
@@ -568,8 +577,6 @@ export RUSTONIG_SYSTEM_LIBONIG=1
 #
 #   * Network / DNS resolution failures:
 skip="${skip-} --skip providers::gcpauth::tests::test_token_refresh_race_condition"
-#   * Potential copyrightable content (see %%prep for a longer explanation):
-skip="${skip-} --skip scenario_tests::scenarios::tests::test_image_analysis"
 #   * Flaky test failing, better to skip for now.
 skip="${skip-} --skip model::tests::with_canonical_limits::skips_canonical_output_limit_when_it_equals_context_limit"
 skip="${skip-} --skip plugins::tests::auto_update_plugins_skips_recently_checked_plugins"
@@ -599,6 +606,8 @@ skip="${skip-} --skip test_steer_session_adds_input_to_active_prompt"
 %license crates/goose-mcp/licenses/leaflet.license
 %license crates/goose-mcp/licenses/leaflet-markercluster.license
 %license crates/goose-mcp/licenses/mermaid.license
+%license crates/goose/licenses/highlight-js.license
+%license crates/goose/licenses/marked.license
 %license cargo-vendor.txt
 
 %{_bindir}/goose

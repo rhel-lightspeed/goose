@@ -1,40 +1,15 @@
-From 84d0aff05ba57a67171ec322de10049a623d72ae Mon Sep 17 00:00:00 2001
-From: Rodolfo Olivieri <rolivier@redhat.com>
-Date: Fri, 24 Apr 2026 10:17:55 -0300
-Subject: [PATCH 6/6] Include legal message for goose proxy provider
-
-Display legal disclaimers when the configured provider is the Red Hat
-proxy (rhel_cla). A startup disclaimer warns about AI usage and data
-handling, and a post-response reminder asks users to review
-AI-generated content.
-
-The disclaimer logic lives in a dedicated legal module so both
-interactive sessions and headless term runs can use it.
----
- crates/goose-cli/src/cli.rs           |  2 ++
- crates/goose-cli/src/commands/term.rs |  3 +++
- crates/goose-cli/src/legal.rs         | 32 +++++++++++++++++++++++++++
- crates/goose-cli/src/lib.rs           |  1 +
- crates/goose-cli/src/session/mod.rs   |  2 ++
- 5 files changed, 40 insertions(+)
- create mode 100644 crates/goose-cli/src/legal.rs
-
-diff --git a/crates/goose-cli/src/cli.rs b/crates/goose-cli/src/cli.rs
-index babe728c6..96081c0d3 100644
 --- a/crates/goose-cli/src/cli.rs
 +++ b/crates/goose-cli/src/cli.rs
-@@ -1397,7 +1397,9 @@ async fn handle_run_command(
+@@ -2352,7 +2352,9 @@ async fn handle_run_command(
              "Headless session started"
          );
-
+ 
 +        crate::legal::display_disclaimer();
          let result = session.headless(contents).await;
 +        crate::legal::display_always_disclaimer();
          log_session_completion(&session, session_start, session_type, result.is_ok()).await;
          result
      } else {
-diff --git a/crates/goose-cli/src/commands/term.rs b/crates/goose-cli/src/commands/term.rs
-index dd539d5..f65b3fd 100644
 --- a/crates/goose-cli/src/commands/term.rs
 +++ b/crates/goose-cli/src/commands/term.rs
 @@ -5,6 +5,7 @@ use goose::conversation::message::{Message, MessageContent, MessageMetadata};
@@ -45,7 +20,7 @@ index dd539d5..f65b3fd 100644
  use crate::session::{build_session, SessionBuilderConfig};
  
  use clap::ValueEnum;
-@@ -260,7 +261,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
+@@ -363,7 +364,9 @@ pub async fn handle_term_run(prompt: Vec<String>) -> Result<()> {
      };
  
      let mut session = build_session(config).await;
@@ -55,9 +30,6 @@ index dd539d5..f65b3fd 100644
  
      Ok(())
  }
-diff --git a/crates/goose-cli/src/legal.rs b/crates/goose-cli/src/legal.rs
-new file mode 100644
-index 0000000..4f63937
 --- /dev/null
 +++ b/crates/goose-cli/src/legal.rs
 @@ -0,0 +1,32 @@
@@ -93,38 +65,31 @@ index 0000000..4f63937
 +        println!("{}", colored_disclaimer);
 +    }
 +}
-diff --git a/crates/goose-cli/src/lib.rs b/crates/goose-cli/src/lib.rs
-index be821a2..48610c7 100644
 --- a/crates/goose-cli/src/lib.rs
 +++ b/crates/goose-cli/src/lib.rs
-@@ -6,6 +6,7 @@ compile_error!("Features `rustls-tls` and `native-tls` are mutually exclusive");
+@@ -8,6 +8,7 @@ compile_error!("Features `rustls-tls` and `native-tls` are mutually exclusive");
  
  pub mod cli;
  pub mod commands;
 +pub mod legal;
  pub mod logging;
- pub mod project_tracker;
  pub mod recipes;
-diff --git a/crates/goose-cli/src/session/mod.rs b/crates/goose-cli/src/session/mod.rs
-index 4deb36a..62f0a2f 100644
+ pub mod session;
 --- a/crates/goose-cli/src/session/mod.rs
 +++ b/crates/goose-cli/src/session/mod.rs
-@@ -512,6 +512,7 @@ impl CliSession {
+@@ -633,6 +633,7 @@ impl CliSession {
          let history_manager = HistoryManager::new();
          history_manager.load(&mut editor);
  
 +        crate::legal::display_disclaimer();
          loop {
-             self.display_context_usage().await?;
+             if self
+                 .extension_loading
+@@ -827,6 +828,7 @@ impl CliSession {
+         let elapsed = start_time.elapsed();
+         let elapsed_str = format_elapsed_time(elapsed);
+         println!("{}", console::style(format!("  ⏱ {}", elapsed_str)).dim());
++        crate::legal::display_always_disclaimer();
+         Ok(())
+     }
  
-@@ -712,6 +713,7 @@ impl CliSession {
-                 let elapsed = start_time.elapsed();
-                 let elapsed_str = format_elapsed_time(elapsed);
-                 println!("{}", console::style(format!("  ⏱ {}", elapsed_str)).dim());
-+                crate::legal::display_always_disclaimer();
-             }
-             RunMode::Plan => {
-                 let mut plan_messages = self.messages.clone();
---
-2.54.0
-

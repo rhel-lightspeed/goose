@@ -97,7 +97,7 @@ Source100:      changelog
 # --no-default-features to individual workspace members).
 # Feature flags (native-tls, otel, telemetry, system-keyring, disable-update) are
 # passed explicitly at build time via '%%cargo_build -n -f' and '%%cargo_test -n -f',
-# into Cargo.toml; see %build and %check.
+# into Cargo.toml; see %%build and %%check.
 Patch1:         0001-Strip-non-Linux-deps-and-use-system-libraries.patch
 # Remove aws_lc_rs from the workspace-level rustls default-features so it is
 # not pulled into the native-tls build path. Activate it explicitly only under
@@ -192,8 +192,8 @@ Conflicts: golang-github-pressly-goose
 #   - https://lists.fedoraproject.org/archives/list/legal@lists.fedoraproject.org/thread/JDE6YNL42ZKVA5ZF4PEUGI5SV2PCSHIR/
 #
 #   For convenience, the items discussed in the legal ML thread are namely:
-#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-mcp/src/computercontroller/tests/data
-#   	- https://github.com/block/goose/tree/v1.45.0/crates/goose-cli/src/scenario_tests/recordings
+#     - https://github.com/block/goose/tree/v1.45.0/crates/goose-mcp/src/computercontroller/tests/data
+#     - https://github.com/block/goose/tree/v1.45.0/crates/goose-cli/src/scenario_tests/recordings
 #
 # Rust crates compiled into the executable contribute additional license terms.
 # To obtain the following list of licenses, build the package and note the

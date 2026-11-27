@@ -24,6 +24,20 @@
 
 %constrain_build -m 6144
 
+# fdupes is used to deduplicate debug source files but is not available in base
+# RHEL repositories (only in EPEL), so it is restricted to Fedora builds only.
+#
+# The debug source tree is populated by find-debuginfo, which runs as part of
+# %%{__debug_install_post} AFTER the %%install section. A plain %%fdupes call
+# inside %%install would therefore run before the files exist and fail
+# silently. Hook the dedup into %%{__os_install_post} instead, the last step
+# of the install scriptlet, so the debug sources are hardlinked after they
+# are created. This keeps the debugsource package free of duplicated files
+# (rpmlint's files-duplicated-waste).
+%if ! 0%{?rhel}
+%global __os_install_post %(echo '%{__os_install_post}'; echo '%%fdupes %%{buildroot}%%{_prefix}/src/debug')
+%endif
+
 %global rustflags_codegen_units 16
 # Features used at build and test time via '%%cargo_build -n -f' and
 # '%%cargo_test -n -f' (-n = --no-default-features, -f = --features).
@@ -550,12 +564,6 @@ install -Dpm 0755 target/rpm/goose -t %{buildroot}%{_bindir}
 # Install man pages
 install -d %{buildroot}%{_mandir}/man1
 install -pm 0644 target/man/*.1 -t %{buildroot}%{_mandir}/man1
-
-# fdupes is used to deduplicate debug source files but is not available in base
-# RHEL repositories (only in EPEL), so it is restricted to Fedora builds only
-%if ! 0%{?rhel}
-%fdupes %{buildroot}%{_prefix}/src/debug
-%endif
 
 %if %{with check}
 %check
